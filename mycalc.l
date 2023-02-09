@@ -1,13 +1,12 @@
 %{
-#define YYSTYPE double
 #include <stdio.h>
 #include "y.tab.h"
 extern YYSTYPE yylval ;
 extern int lineno ;
 %}
 %%
-[0-9]+	{ yylval = atoi(yytext) ; return NUMBER ; }
-[0-9]+"."[0-9]+ {yylval = atof(yytext); return NUMBER;}
+[0-9]+	{ yylval.numValue = atoi(yytext) ; return NUMBER ; }
+[0-9]+"."[0-9]+ {yylval.numValue = atof(yytext); return NUMBER;}
 [ \t] 	;
 [\n] 	{ lineno++ ; return RET ; }
 [+]	{ return PLUS ;}
