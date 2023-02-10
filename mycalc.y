@@ -14,6 +14,7 @@ void warning();
 }
 
 %token NUMBER PLUS SUB MUL DIV RET 
+	/* %token BEGIN_DECL END_DECL VAR ASSIGN INTEGER_DECL */
 %left PLUS SUB  /* left associative */
 %left MUL DIV  	/* left associative */
 %left '(' ')'	/* higher precedence compared to plus,mul,div,mul */
@@ -30,6 +31,12 @@ expr: 	expr PLUS expr    { $<ptr>$ = createNode(0 , 0 , '+' , $<ptr>1 , $<ptr>3 
 	|'(' expr ')'     { $<ptr>$ = $<ptr>2;}
 	|NUMBER           { $<ptr>$ = createNode(1 , $<numValue>1 , 'o' , NULL , NULL);}
  	;
+	/* GRAMMAR */
+  	/* declaration: BEGIN_DECL RET INTEGER_DECL var_list ';' RET END_DECL */
+  	
+  	/* var_list : 	VAR 
+  		    | var_list ',' VAR 
+  		    ;  */
   
 %%
 
