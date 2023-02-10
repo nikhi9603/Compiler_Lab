@@ -13,7 +13,12 @@ extern int lineno ;
 [-]	{  return SUB ;}
 [*]	{  return MUL ;}
 [/] 	{ return DIV ;}
+	/* [=] { return ASSIGN; }*/
 <<EOF>>	{ return 0;}
+	/* "begindecl"    { return BEGIN_DECL; } */
+	/* "enddecl"      { return END_DECL; } */
+	/* "integer"      { return INTEGER_DECL; } */
+	/* [A-Za-z]+      { return VAR; }*/
 .	return yytext[0];
 %%
 
