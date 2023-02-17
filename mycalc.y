@@ -11,32 +11,45 @@ void warning();
 %union {
 	double numValue;
 	struct node* ptr;
+	/* add other struct ptr for */
 }
 
 %token NUMBER PLUS SUB MUL DIV RET 
-	/* %token BEGIN_DECL END_DECL VAR ASSIGN INTEGER_DECL */
+%token BEGINDECL ENDDECL VAR ASSIGN INTEGERDECL 
 %left PLUS SUB  /* left associative */
 %left MUL DIV  	/* left associative */
-%left '(' ')'	/* higher precedence compared to plus,mul,div,mul */
+%left '(' ')'	/* higher precedence compared to plus, mul, div, mul */
   
+	/* adding types */
+%type <ptr> expr
+%type <numValue> NUMBER
+
 %%
 list: 	  /* Parser: Productions */
 	| list RET
-	| list expr RET    { printf("\tResult = %.8g\n", evaluateSyntaxTree($<ptr>2)); }
+	| list assignstmt RET 
+	| list declaration RET
 	;
-expr: 	expr PLUS expr    { $<ptr>$ = createNode(0 , 0 , '+' , $<ptr>1 , $<ptr>3 ); }
-	|expr SUB expr    { $<ptr>$ = createNode(0 , 0 , '-' , $<ptr>1 , $<ptr>3 ); }
-	|expr MUL expr    { $<ptr>$ = createNode(0 , 0 , '*' , $<ptr>1 , $<ptr>3 ); }
-	|expr DIV expr    { $<ptr>$ = createNode(0 , 0 , '/' , $<ptr>1 , $<ptr>3 ); }
-	|'(' expr ')'     { $<ptr>$ = $<ptr>2;}
-	|NUMBER           { $<ptr>$ = createNode(1 , $<numValue>1 , 'o' , NULL , NULL);}
+	/* | list expr RET    { printf("\tResult = %.8g\n", evaluateSyntaxTree($<ptr>2)); }
+	; */
+expr: expr PLUS expr  { $$ = createNode(0 , 0 , '+' , $1 , $3 ); }
+	|expr SUB expr    { $$ = createNode(0 , 0 , '-' , $1 , $3 ); }
+	|expr MUL expr    { $$ = createNode(0 , 0 , '*' , $1 , $3 ); }
+	|expr DIV expr    { $$ = createNode(0 , 0 , '/' , $1 , $3 ); }
+	|'(' expr ')'     { $$ = $2;}
+	|NUMBER           { $$ = createNode(1 , $1 , 'o' , NULL , NULL);}
+	|VAR 
  	;
-	/* GRAMMAR */
-  	/* declaration: BEGIN_DECL RET INTEGER_DECL var_list ';' RET END_DECL */
+
+declaration: BEGINDECL RET INTEGERDECL varlist ';' RET ENDDECL  /* call for symtable lookup and insertion if not found in symtable */	
+		   ;
   	
-  	/* var_list : 	VAR 
-  		    | var_list ',' VAR 
-  		    ;  */
+varlist: VAR
+  	   | varlist ',' VAR 
+	   ;
+
+assignstmt: VAR ASSIGN expr ';'		/* lookup + updating corresponding value field of that variable */
+		  ;
   
 %%
 

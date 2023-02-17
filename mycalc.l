@@ -13,13 +13,13 @@ extern int lineno ;
 [-]	{  return SUB ;}
 [*]	{  return MUL ;}
 [/] 	{ return DIV ;}
-	/* [=] { return ASSIGN; }*/
+[=] { return ASSIGN; }*/
 <<EOF>>	{ return 0;}
-	/* "begindecl"    { return BEGIN_DECL; } */
-	/* "enddecl"      { return END_DECL; } */
-	/* "integer"      { return INTEGER_DECL; } */
-	/* [A-Za-z]+      { return VAR; }*/
-.	return yytext[0];
+"begindecl"    { return BEGINDECL; } 
+"enddecl"      { return ENDDECL; } 
+"integer"      { return INTEGERDECL; } 
+[a-zA-Z][A-Za-z0-9]*      { return VAR; } 
+.						  { return yytext[0]; }
 %%
 
 int yywrap()
