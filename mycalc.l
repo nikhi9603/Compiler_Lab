@@ -13,7 +13,7 @@ extern int lineno ;
 [-]	{  return SUB ;}
 [*]	{  return MUL ;}
 [/] 	{ return DIV ;}
-[=] { return ASSIGN; }*/
+[=] { return ASSIGN; }
 <<EOF>>	{ return 0;}
 "begindecl"    { return BEGINDECL; } 
 "enddecl"      { return ENDDECL; } 
