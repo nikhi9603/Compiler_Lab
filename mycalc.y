@@ -1,10 +1,13 @@
 %{
 #include<stdio.h>
 #include "syntax_tree.h"
+#include "sym_table.h"
 int yylex();
 void main();
 void yyerror();
 void warning();
+
+extern struct sym_table symbol_table[100] ;
 %}
 
 	/* type of YYSTYPE */
@@ -28,7 +31,7 @@ list: 	  /* Parser: Productions */
 	| list RET
 	| list assignStmt RET 
 	| list declaration RET
-	| list funStmt
+	| list funStmt RET
 	;
 	/* | list expr RET    { printf("\tResult = %.8g\n", evaluateSyntaxTree($<ptr>2)); }
 	; */
@@ -38,7 +41,7 @@ expr: expr PLUS expr  { $$ = createNode(0 , 0 , '+' , $1 , $3 ); }
 	|expr DIV expr    { $$ = createNode(0 , 0 , '/' , $1 , $3 ); }
 	|'(' expr ')'     { $$ = $2;}
 	|NUMBER           { $$ = createNode(1 , $1 , 'o' , NULL , NULL);}
-	|VAR 
+	|VAR 			  { }
  	;
 
 declaration: BEGINDECL RET INTEGERDECL varlist ';' RET ENDDECL  /* call for symtable lookup and insertion if not found in symtable */	

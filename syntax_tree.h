@@ -4,9 +4,11 @@ struct node
 	/* Type can be 0,1 */
 	/* Type 0 : operators + , * , / , -  */
 	/* Type 1 : constants */
+	/* Type 2 : variables */
 	int type; 
 	double val;
 	char op;
+	int sym_index ;
 	struct node *left;
 	struct node *right;
 };
