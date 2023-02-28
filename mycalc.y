@@ -11,14 +11,13 @@ void warning();
 %union {
 	double numValue;
 	struct node* ptr;
-	/* add other struct ptr for */
 }
 
 %token NUMBER PLUS SUB MUL DIV RET 
 %token BEGINDECL ENDDECL VAR ASSIGN INTEGERDECL 
-%left PLUS SUB  /* left associative */
+%left PLUS SUB  /* left associative*/
 %left MUL DIV  	/* left associative */
-%left '(' ')'	/* higher precedence compared to plus, mul, div, mul */
+%left '(' ')'	/* higher precedence compared to plus, mul, div, sub */
   
 	/* adding types */
 %type <ptr> expr
@@ -27,8 +26,9 @@ void warning();
 %%
 list: 	  /* Parser: Productions */
 	| list RET
-	| list assignstmt RET 
+	| list assignStmt RET 
 	| list declaration RET
+	| list funStmt
 	;
 	/* | list expr RET    { printf("\tResult = %.8g\n", evaluateSyntaxTree($<ptr>2)); }
 	; */
@@ -48,7 +48,7 @@ varlist: VAR
   	   | varlist ',' VAR 
 	   ;
 
-assignstmt: VAR ASSIGN expr ';'		/* lookup + updating corresponding value field of that variable */
+assignStmt: VAR ASSIGN expr ';'		/* lookup + updating corresponding value field of that variable */
 		  ;
   
 %%

@@ -1,4 +1,4 @@
-// Nodes of syntax tree
+// Nodes of syntax tree of type number
 struct node 
 {
 	/* Type can be 0,1 */
