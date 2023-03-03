@@ -1,0 +1,4 @@
+
+print(v , v1 , v2);
+
+print(var);

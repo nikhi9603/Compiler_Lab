@@ -1,4 +1,5 @@
 #include "sym_table.h"
+#include <cstring>
 struct sym_node symbol_table[100];
 
 

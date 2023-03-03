@@ -7,7 +7,7 @@ void main();
 void yyerror();
 void warning();
 
-extern struct sym_table symbol_table[100] ;
+extern struct sym_node symbol_table[100] ;
 %}
 
 	/* type of YYSTYPE */
@@ -16,7 +16,8 @@ extern struct sym_table symbol_table[100] ;
 	struct node* ptr;
 }
 
-%token NUMBER PLUS SUB MUL DIV RET 
+%token <numValue> NUMBER 
+%token PLUS SUB MUL DIV RET 
 %token BEGINDECL ENDDECL VAR ASSIGN INTEGERDECL 
 %left PLUS SUB  /* left associative*/
 %left MUL DIV  	/* left associative */
@@ -24,36 +25,34 @@ extern struct sym_table symbol_table[100] ;
   
 	/* adding types */
 %type <ptr> expr
-%type <numValue> NUMBER
 
 %%
 list: 	  /* Parser: Productions */
 	| list RET
-	| list assignStmt RET 
-	| list declaration RET
-	| list funStmt RET
-	;
-	/* | list expr RET    { printf("\tResult = %.8g\n", evaluateSyntaxTree($<ptr>2)); }
-	; */
+						// | list assignStmt RET 
+						// | list declaration RET
+						// 									/*| list funStmt RET*/
+	// ;
+	| list expr RET    { printf("\tResult = %.8g\n", evaluateSyntaxTree($2)); }
+	; 
 expr: expr PLUS expr  { $$ = createNode(0 , 0 , '+' , $1 , $3 ); }
 	|expr SUB expr    { $$ = createNode(0 , 0 , '-' , $1 , $3 ); }
 	|expr MUL expr    { $$ = createNode(0 , 0 , '*' , $1 , $3 ); }
 	|expr DIV expr    { $$ = createNode(0 , 0 , '/' , $1 , $3 ); }
 	|'(' expr ')'     { $$ = $2;}
 	|NUMBER           { $$ = createNode(1 , $1 , 'o' , NULL , NULL);}
-	|VAR 			  { }
+	// |VAR 			  { }
  	;
 
-declaration: BEGINDECL RET INTEGERDECL varlist ';' RET ENDDECL  /* call for symtable lookup and insertion if not found in symtable */	
-		   ;
-  	
-varlist: VAR
-  	   | varlist ',' VAR 
-	   ;
+	// declaration: BEGINDECL RET INTEGERDECL varlist ';' RET ENDDECL  {} /* call for symtable lookup and insertion if not found in symtable */	
+	// 		   ;
+		
+	// varlist: VAR {}
+	//   	   | varlist ',' VAR  {}
+	// 	   ;
 
-assignStmt: VAR ASSIGN expr ';'		/* lookup + updating corresponding value field of that variable */
-		  ;
-  
+	// assignStmt: VAR ASSIGN expr ';'	{}	/* lookup + updating corresponding value field of that variable */
+	// 		  ;
 %%
 
 	/* end of grammar */
@@ -79,4 +78,3 @@ void warning(char *s, char *t)	/* print warning message */
 		fprintf(stderr, " %s", t);
 	fprintf(stderr, " near line %d\n", lineno);
 }
-

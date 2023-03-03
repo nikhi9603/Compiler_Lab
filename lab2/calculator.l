@@ -1,5 +1,8 @@
 %{
 #include <stdio.h>
+#include <iostream>
+using namespace std;
+#include "syntax_tree.h"
 #include "y.tab.h"
 extern YYSTYPE yylval ;
 extern int lineno ;
@@ -14,12 +17,13 @@ extern int lineno ;
 [*]	{  return MUL ;}
 [/] 	{ return DIV ;}
 [=] { return ASSIGN; }
-<<EOF>>	{ yywrap(); return END;}
+[;] { return SEMI_COLON; }
 "begindecl"    { return BEGINDECL; } 
 "enddecl"      { return ENDDECL; } 
 "integer"      { return INTEGERDECL; } 
-"end" 			{ return END;}
-[a-zA-Z][A-Za-z0-9]*      { return VAR; } 
+"print"        { return PRINT_FN ; }
+[a-zA-Z]+[A-Za-z0-9]*      { yylval.var_name = yytext ; return VAR;} 
+<<EOF>>         {return 0;}
 .						  { return yytext[0]; }
 %%
 

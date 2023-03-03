@@ -7,6 +7,6 @@ struct sym_node
     float value ;
 };
 
-bool symTable_lookup(char sym_name[20]);
+int symTable_lookup(char sym_name[20]);
 
 void insertSymbol(int sym_type , char sym_name[20] , float sym_value);
