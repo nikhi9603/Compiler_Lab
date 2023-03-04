@@ -6,7 +6,7 @@ all: clean compile
 	mv $(intermediateFiles) -t bin
 
 compile: mv_ifiles 
-	gcc src/*.c -I include/ -o compiler
+	g++ src/*.c src/*.cpp -I include/ -o compiler
 
 mv_ifiles: parse
 	mv lex.yy.c y.tab.c -t src/
@@ -16,7 +16,8 @@ parse:
 	yacc -d src/compiler.y
 
 tests:
-	@read -p "Enter testcase filename present in 'testcases': " TESTFILE ;\
+	@read -p "Enter testcase filename present in 'testcases' directory: " TESTFILE ;\
+	echo ;\
 	bin/compiler < testcases/$$TESTFILE
 
 clean:

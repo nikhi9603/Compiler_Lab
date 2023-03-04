@@ -2,6 +2,7 @@
 #define SYM_TABLE_H
 #include <iostream>
 #include <map>
+#include<string>
 using namespace std ;
 
 enum symbol_type { INTEGER_SYM = 0 , FUNC = 1 } ;
@@ -16,10 +17,9 @@ struct symbol_details
 };
 
 // SYMBOL TABLE : map between variable/fun names to tits details
-extern map<char* , struct symbol_details> symbol_table ;
+extern map<string , struct symbol_details> symbol_table ;
 
-
-/* Symbol Table functions */
+/* Symbol Table functions - lookup , insert , update */
 
 // lookup - if symbol is present then it returns its details else returns empty symbol with undecl type 
 struct symbol_details* symbol_lookup(char* name) ;
@@ -28,6 +28,6 @@ struct symbol_details* symbol_lookup(char* name) ;
 void insert_symbol(char* name , symbol_type type , define_check check , char const* return_type , int val);
 
 // updating symbol table
-void update_symbol_details(char* name , define_check check , int val);
+void update_symbol_details(char* name ,int val);
 
 #endif

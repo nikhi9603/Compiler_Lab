@@ -4,7 +4,7 @@
 using namespace std;
 
 /* EXPRESSION TREE NODE */
-struct expr_node*  createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right , char op , double val , char *var_name , char *fun_name ) 
+struct expr_node*  createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right , char op , double val , char *var_name) 
 {
     struct expr_node* newNode;
 
@@ -13,8 +13,8 @@ struct expr_node*  createExpr_Node(expr_type type , struct expr_node* left , str
 	
 	if(newNode == NULL)
 	{
-		printf("Memory not available to allocate new nodes\n");
-		exit(-1);
+		cerr << "Memory not available to allocate new nodes\n" << endl ;
+		exit(0);
 	}
 
 	newNode->type = type ;
@@ -34,13 +34,16 @@ struct expr_node*  createExpr_Node(expr_type type , struct expr_node* left , str
 				break;		
 		default:
 				/* raise error */
-				break;
+				cerr << "Invalid expression" << endl ;
+				exit(0);
 	}
 
     return newNode;
 }
 
 /* NODE CREATION */
+
+/* ASSIGNMENT STATEMENT NODE */
 struct node* createNode(char* var_name , struct node* next_node)
 {
 	struct node* newNode;
@@ -50,8 +53,8 @@ struct node* createNode(char* var_name , struct node* next_node)
 	
 	if(newNode == NULL)
 	{
-		printf("Memory not available to allocate new nodes\n");
-		exit(-1);
+		cerr << "Memory not available to allocate new nodes\n" << endl ;
+		exit(0);
 	}
 
 	newNode -> var_name = var_name ;
@@ -60,23 +63,42 @@ struct node* createNode(char* var_name , struct node* next_node)
 }
 
 /* FUNCTION TREE NODE */
-// struct funcStmt_node* createFunc_Node(struct expr_node expr , struct funcStmt_node* next)
-// {
-// 	struct funcStmt_node* newNode;
+struct funcStmt_node* createFunc_Node(struct expr_node* expr , struct funcStmt_node* next)
+{
+	struct funcStmt_node* newNode;
 
-// 	// allocating memory for newNodes
-// 	newNode = (struct funcStmt_node*)malloc(sizeof(struct funcStmt_node)) ;
+	// allocating memory for newNodes
+	newNode = (struct funcStmt_node*)malloc(sizeof(struct funcStmt_node)) ;
 	
-// 	if(newNode == NULL)
-// 	{
-// 		printf("Memory not available to allocate new nodes\n");
-// 		exit(-1);
-// 	}
-// 	newNode->args.expr = expr ;
-// 	newNode->next = next ;
-// 	return newNode ;
-// }
+	if(newNode == NULL)
+	{
+		cerr << "Memory not available to allocate new nodes\n" << endl ;
+		exit(0);
+	}
+	newNode->expr_root = expr;
+	newNode->next = next ;
+	return newNode ;
+}
 
+/* DECLARATION STATEMENT NODE */
+struct declstmt_tree* createDeclStmt_Node(var_type type, struct node *decl_var , struct declstmt_tree *next)
+{
+	struct declstmt_tree* newNode;
+
+	// allocating memory for newNodes
+	newNode = (struct declstmt_tree*)malloc(sizeof(struct declstmt_tree)) ;
+	
+	if(newNode == NULL)
+	{
+		cerr << "Memory not available to allocate new nodes\n" << endl ;
+		exit(0);
+	}
+	
+	newNode->type = type;
+	newNode->decl_var = decl_var;
+	newNode->next = next ;
+	return newNode ;
+}
 
 double evaluate_Expr_Tree(struct expr_node *root , int i) 
 {
@@ -110,7 +132,7 @@ double evaluate_Expr_Tree(struct expr_node *root , int i)
 				else
 				{
 					cerr << "Division by Zero Error\n" << endl;
-					exit(-1);
+					exit(0);
 				}
 			default:		
 				break;
@@ -120,15 +142,15 @@ double evaluate_Expr_Tree(struct expr_node *root , int i)
 	{
 		result = root->node_type_obj.val;
 	}
-	else if (root->type = VARIABLE)
+	else if (root->type == VARIABLE)
 	{
 		sym = symbol_lookup(root->node_type_obj.variable_name);
 
 		// undeclared variables or undefined variables both are wrong in expressions
 		if( sym->check == UNDECL)
 		{
-			cerr << "Undeclared variable" << root->node_type_obj.variable_name << endl ;
-			exit(-1);
+			cerr << "Undeclared variable " << root->node_type_obj.variable_name << endl ;
+			exit(0);
 		}
 		else if ( sym->check==UNDEF && i == 0 )
 		{
@@ -140,90 +162,56 @@ double evaluate_Expr_Tree(struct expr_node *root , int i)
 			cout<< "UNDEF" << endl ;
 			result = -100;
 		}
+		result = sym->val ;
 		
 	}
 	return result ;
 }
 
-void print_func_tree(struct node *root)
+void print_func_tree(struct funcStmt_node *root)
 {
-	struct node *temp = root ;
+	struct funcStmt_node *temp = root ;
 	double result = 0;
 	struct symbol_details *sym ;
 
 	while(temp != NULL)
 	{
-		sym = symbol_lookup(temp->var_name);
-		if(sym->check == UNDECL)
+		if(temp->expr_root->type == VARIABLE)
 		{
-			cerr << "Undeclared variable" << root->var_name << endl ;
-			exit(-1);
+			sym = symbol_lookup(temp->expr_root->node_type_obj.variable_name);
+			if(sym->check == UNDECL)
+			{
+				cerr << "Undeclared variable " << temp->expr_root->node_type_obj.variable_name << endl ;
+				exit(0);
+			}
+			else if (sym->check == UNDEF)
+			{
+				cout << "UNDEF" << endl ;
+			}
+			else
+			{
+				result = sym->val;
+				cout << result << endl ;
+			}
 		}
-		else if (sym->check == UNDEF)
+		else 
 		{
-			cout << "UNDEF" << endl ;
+			result = evaluate_Expr_Tree(temp->expr_root,0);
+			cout <<  result << endl ;
 		}
-		else
-		{
-			result = sym->val;
-			cout << result << endl ;
-		}
-		// switch (temp->type)
-		// {
-		// case EXPR:
-		// 	result = evaluate_Expr_Tree(&temp->args.expr , 0) ;
-		// 	cout << result << endl ;
-		// 	break;
-		// case VARIABLE_ARG:
-		// 	sym = symbol_lookup(root->args.var.var_name) ;
-
-		// 	if( sym->check == UNDECL)
-		// 	{
-		// 		cerr << "Undeclared variable" << root->args.var.var_name << endl ;
-		// 		exit(-1);
-		// 	}
-		// 	else if (sym->check == UNDEF)
-		// 	{
-		// 		cout << "UNDEF" << endl ;
-		// 	}
-		// 	else
-		// 	{
-		// 		cout << sym->val << endl ;
-		// 	}
-		// default:
-		// 	cerr << "Unsupported operands for print function" << endl ;
-		// 	exit(-1);
-		// 	break;
-		// }
-
 		temp = temp -> next ;
 	}
 }
 
 void evaluate_assign_stmt(struct expr_node *root)
 {
-	// left node will be var , right will be expr
-	struct symbol_details *sym ;
-	sym = symbol_lookup(root->left->node_type_obj.variable_name) ;
-
-	// undeclared varaible - error
-	if (sym->check == UNDECL)
-	{
-		cerr << "Undeclared variable" << root->left->node_type_obj.variable_name << endl ;
-		exit(-1);
-	}
-	else
-	{
-		double result = evaluate_Expr_Tree(root->right , 0) ;
-
-		// both def and undef its same 
-		update_symbol_details(root->left->node_type_obj.variable_name , DEF , result ) ;
-	}
+	double res = evaluate_Expr_Tree(root->right , 0);
+	update_symbol_details(root->left->node_type_obj.variable_name , res);
 }
 
 void evaluate_declare_stmt(struct declstmt_tree *root)
 {
-	if( root != NULL)
+	while( root != NULL)
 	{
 		struct node* temp = root -> decl_var ;
 		struct symbol_details *sym ;
@@ -234,21 +222,20 @@ void evaluate_declare_stmt(struct declstmt_tree *root)
 
 			if(sym->check != UNDECL)
 			{
-				cerr << "Re-declaring variable" << temp->var_name << endl ;
-				exit(-1);
+				cerr << "Re-declaring variable " << temp->var_name << endl ;
+				exit(0);
 			}
 			else
 			{
 				insert_symbol(temp->var_name , INTEGER_SYM , UNDEF , "integer" , 0);
 			}
-
 			temp = temp->next ;
 		}
-		evaluate_declare_stmt(root->next);
+		root = root -> next;
 	}
 }
 
-struct statement* createStmt(stmt_type type , struct declstmt_tree *decl_tree , struct expr_node* assignStmt_tree , struct node *func_tree , struct statement* next)
+struct statement* createStmt(stmt_type type , struct declstmt_tree *decl_tree , struct expr_node* assignStmt_tree , struct funcStmt_node *func_tree , struct statement* next)
 {
 	struct statement* newNode;
 
@@ -257,29 +244,27 @@ struct statement* createStmt(stmt_type type , struct declstmt_tree *decl_tree , 
 	
 	if(newNode == NULL)
 	{
-		printf("Memory not available to allocate new nodes\n");
-		exit(-1);
+		cerr << "Memory not available to allocate new nodes\n" << endl ;
+		exit(0);
 	}
 
 	newNode->type = type ;
 	newNode->next = next ;
 
-	switch (type)
+	switch (newNode->type)
 	{
 		case DECL_STMT:
-			cout << "reached decl" << endl;
-			newNode->tree->decl_tree = decl_tree ;
+			newNode->tree.decl_tree = decl_tree ;
 			break;
 		case ASSIGN_STMT:
-			newNode->tree->assignStmt_tree = assignStmt_tree ;
+			newNode->tree.assignStmt_tree = assignStmt_tree ;
 			break;
 		case PRINTFN_STMT:
-			cout << "reached print" << endl ;
-			newNode->tree->func_tree = func_tree;
+			newNode->tree.func_tree = func_tree;
 			break;
 		default:
 			cerr << "Unknown type of statement" << endl ;
-			exit(-1);
+			exit(0);
 	}
 
 	return newNode;
@@ -294,13 +279,13 @@ void evaluate_program(struct statement *root)
 		switch(temp->type)
 		{
 			case DECL_STMT:
-				evaluate_declare_stmt(temp->tree->decl_tree);
+				evaluate_declare_stmt(temp->tree.decl_tree);
 				break;
 			case ASSIGN_STMT:
-				evaluate_assign_stmt(temp->tree->assignStmt_tree);
+				evaluate_assign_stmt(temp->tree.assignStmt_tree);
 				break;
 			case PRINTFN_STMT:
-				print_func_tree(temp->tree->func_tree);
+				print_func_tree(temp->tree.func_tree);
 				break;
 			default:
 				break;

@@ -1,14 +1,14 @@
 #include "sym_table.h"
 
-struct symbol_details s1 = {FUNC , DEF , (char *)"void" , 0};
-
-map<char* , struct symbol_details> symbol_table = {{ (char*)"print" , s1}};
+map<string , struct symbol_details> symbol_table ;
 
 struct symbol_details* symbol_lookup(char* name) 
 {
     if(symbol_table.find(name) != symbol_table.end())       // symbol is present
     {
-        return &symbol_table[name] ;
+        struct symbol_details *s;
+        s = &symbol_table[name];
+        return s ;
     }
     else    // not found
     {
@@ -16,10 +16,9 @@ struct symbol_details* symbol_lookup(char* name)
 
         if(empty_symbol == NULL)
         {
-            printf("Memory not available to allocate\n");
-		    exit(-1);    
+            cerr << "Memory not available to allocate\n" << endl ;
+		    exit(0);    
         }
-
         empty_symbol->check = UNDECL ;
         return empty_symbol;
     }
@@ -29,9 +28,10 @@ void insert_symbol(char* name , symbol_type type , define_check check , char con
 {
     struct symbol_details* sym = symbol_lookup(name) ;
 
-    if ( sym->check == UNDECL )
+    if ( sym->check != UNDECL )
     {
-       cerr << "Undeclared variable" << name << endl ;
+       cerr << "Undeclared variable " << name << endl ;
+       exit(0);
     }
     else
     {  
@@ -42,23 +42,25 @@ void insert_symbol(char* name , symbol_type type , define_check check , char con
         newSymbol.val = val ;
 
         symbol_table.insert({name , newSymbol}) ;
+        sym = symbol_lookup(name);
     }
   
     return ;
 }
 
-void update_symbol_details(char* name , define_check check , int val)
+void update_symbol_details(char* name , int val)
 {
     struct symbol_details* sym = symbol_lookup(name) ;
 
     if ( sym->check == UNDECL )
     {
-       cerr << "Undeclared variable" << name << endl ;
+       cerr << "Undeclared variable " << name << endl ;
+       exit(0);
     }
     else
     {
-        sym->check = DEF ;
-        sym->val = val ;
+        symbol_table[name].check = DEF ;
+        symbol_table[name].val = val;
         return ;
     }
 }
