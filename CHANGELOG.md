@@ -1,4 +1,4 @@
-#### WEEK1 : CALCULATOR
+##### WEEK1 : CALCULATOR
 _Directory_ : calculator 
 <br />
 A simple calculator is designed allowing basic arithmetic operations + , - , * , / over integers and floating point numbers.
