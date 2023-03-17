@@ -16,13 +16,27 @@
  */
 
 %{	
-	#include <stdio.h>
-	#include "AbsSynTree.h"
-#define YYSTYPE double
-	int yylex();
-	void yyerror( char* );
-        int i;	
+#include <stdio.h>
+#include<string.h>
+#include<iostream>
+using namespace std;
+#include "syntax_tree.h"
+#include "sym_table.h"
+	// #include "AbsSynTree.h"
+	// #define YYSTYPE double
+int yylex();
+	// void yyerror( char* );
+int main(int argc, char *argv[]);
+void yyerror(char const *s);
+void warning(char const *s, char const *t);
+	// int i;	
 %}
+
+%union {
+	double numValue;
+	char* var_name;
+	struct statement *stmt;
+}
 
 %token BEG END
 %token T_INT T_BOOL
@@ -72,6 +86,7 @@ Glist 	:	Gid
 Gid	:	VAR		{ 				}
 	|	Gid '[' NUM ']'	{                                                   }		;
 	
+	// doubt in arg_list structure
 func 	:	VAR '(' arg_list ')' 					{ 					}
 	;
 		
@@ -79,7 +94,7 @@ arg_list:
 	|	arg_list1
 	;
 	
-arg_list1:	arg_list1 ';' arg
+arg_list1:	arg_list1 ';' arg		
 	|	arg
 	;
 	
