@@ -2,7 +2,7 @@
 using namespace std;
 
 // EXPRESSION NODE
-enum expr_type { OP = 0 , INTEGER = 1 , BOOL = 2 , VARIABLE = 3 , ARRAY_ELEMENT = 4 , FUNCTION_CALL = 5};
+enum expr_type { OP = 0 , INTEGER = 1 , BOOL = 2 , VARIABLE = 3 , ARRAY_ELEMENT = 4 , FUNCTION_CALL = 5 , UNUSED = 6};
 
 struct expr_node
 {
@@ -64,16 +64,19 @@ struct writestmt_tree
 };
 
 // condition statement
+struct stmt_list;
+
 enum condt_type {IF = 0 , IF_ELSE = 1 , WHILE = 2 , FOR = 3};
 
 struct condtStmt_tree
 {
-    
+    condt_type type ;
+    struct expr_node *expr ;
+    struct stmt_list *stmts ;
 };
 
-
 // Statements
-enum stmt_type {DECL = 0 , ASSIGN = 1 , READ = 2, WRITE  = 3, CONDT = 4 ,   FUNC_CALL = 5 , RETURN_STMT = 6};
+enum stmt_type {DECL = 0 , ASSIGN = 1 , READ = 2, WRITE  = 3, CONDT = 4 , FUNC_CALL = 5 , RETURN_STMT = 6};
 
 union stmt_tree
 {
@@ -91,3 +94,5 @@ struct stmt_list
 };
 
 
+/* NODES CREATION */
+struct expr_node* createExpr_Node(expr_type type ,  struct expr_node* left=NULL , struct expr_node* right=NULL , char op = '\0' , int const_val = 0 , bool val = true , char *var_name = nullptr , vector<int> index_ls  , struct expr_node* params=NULL) ;

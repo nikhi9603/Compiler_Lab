@@ -35,14 +35,16 @@ void warning(char const *s, char const *t);
 %union {
 	double numValue;
 	char* var_name;
-	struct statement *stmt;
+	struct expr_node* expr_ptr ;
+	struct stmt_list* stmt_list_ptr ;
 }
 
 %token BEG END
 %token T_INT T_BOOL
 %token READ WRITE
 %token DECL ENDDECL
-%token VAR NUM
+%token <var_name> VAR 
+%token <numValue> NUM
 %token IF THEN ELSE ENDIF
 %token LOGICAL_AND LOGICAL_NOT LOGICAL_OR
 %token EQUALEQUAL LESSTHANOREQUAL GREATERTHANOREQUAL NOTEQUAL
@@ -58,6 +60,15 @@ void warning(char const *s, char const *t);
 %left '%'
 %left LOGICAL_AND LOGICAL_OR
 %left LOGICAL_NOT
+
+	/* adding types */
+%type <expr_ptr> expr
+%type <expr_ptr> func_call 
+%type <expr_ptr> var_expr
+%type <expr_ptr> param_list
+%type <expr_ptr> param_list1
+%type <expr_ptr> para
+
 %%
 
 Prog	:	Gdecl_sec Fdef_sec MainBlock
@@ -177,39 +188,41 @@ cond_stmt:	IF expr THEN stmt_list ENDIF 	{ 						}
 func_stmt:	func_call 		{ 						}
 	;
 	
-func_call:	VAR '(' param_list ')'	{ 						   }
+func_call:	VAR '(' param_list ')'		{ $$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , '\0' , 0 , $1 , NULL); $$->params = $3 -> params; }
 	;
 	
 param_list:				
-	|	param_list1		
+	|	param_list1						{ $$ = $1 ; }
 	;
 	
-param_list1:	para			
-	|	para ',' param_list1	
+param_list1:	para					{ $$ = $1 ; $1 -> params = NULL; }	
+	|	para ',' param_list1			{ $1 -> params = $3 ; $$ = $1  ; }
 	;
-para	:	expr			{ 						}
+
+para	:	expr						{ $$ = $1 ; }
 	;
-expr	:	NUM 			{ 			}
-	|	'-' NUM			{  						   }
-	|	var_expr		{ 			}
-	|	T			{ 						  	}
-	|	F			{ 	}
-	|	'(' expr ')'		{  			}
-	|	expr '+' expr 		{ 						}
-	|	expr '-' expr	 	{ 						}
-	|	expr '*' expr 		{ 			}
-	|	expr '/' expr 		{ 					}
-	|	expr '%' expr 		{}
-	|	expr '<' expr		{}
-	|	expr '>' expr		{}
-	|	expr GREATERTHANOREQUAL expr				{ 						}
-	|	expr LESSTHANOREQUAL expr	{  						}
-	|	expr NOTEQUAL expr			{ 						}
-	|	expr EQUALEQUAL expr	{ 						}
-	|	LOGICAL_NOT expr	{ 						}
-	|	expr LOGICAL_AND expr	{ 						}
-	|	expr LOGICAL_OR expr	{ 						}
-	|	func_call		{  }
+
+expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , '\0' , $1); }
+	|	'-' NUM							{ $$ = createExpr_Node(INTEGER , NULL , NULL , '\0' , -1*$1); }
+	|	var_expr						{ $$ = $1; }
+	|	T								{ $$ = createExpr_Node(BOOL , NULL , NULL , '\0' , 0 , true); }
+	|	F								{ $$ = createExpr_Node(BOOL , NULL , NULL , '\0' , 0 , false); }
+	|	'(' expr ')'					{ $$ = $2; }
+	|	expr '+' expr 					{ $$ = createExpr_Node(OP , $1 , $3 , '+'); }
+	|	expr '-' expr	 				{ $$ = createExpr_Node(OP , $1 , $3 , '-'); }
+	|	expr '*' expr 					{ $$ = createExpr_Node(OP , $1 , $3 , '*'); }
+	|	expr '/' expr 					{ $$ = createExpr_Node(OP , $1 , $3 , '/'); }
+	|	expr '%' expr 					{ $$ = createExpr_Node(OP , $1 , $3 , '%'); }		
+	|	expr '<' expr					{ $$ = createExpr_Node(OP , $1 , $3 , '<'); }	
+	|	expr '>' expr					{ $$ = createExpr_Node(OP , $1 , $3 , '>'); }	
+	|	expr GREATERTHANOREQUAL expr	{ $$ = createExpr_Node(OP , $1 , $3 , '>='); }	
+	|	expr LESSTHANOREQUAL expr		{ $$ = createExpr_Node(OP , $1 , $3 , '<='); }	
+	|	expr NOTEQUAL expr				{ $$ = createExpr_Node(OP , $1 , $3 , '!='); }	
+	|	expr EQUALEQUAL expr			{ $$ = createExpr_Node(OP , $1 , $3 , '=='); }	
+	|	LOGICAL_NOT expr				{ $$ = createExpr_Node(OP , NULL , $3 , '!');}	
+	|	expr LOGICAL_AND expr			{ $$ = createExpr_Node(OP , $1 , $3 , '&&'); }	
+	|	expr LOGICAL_OR expr			{ $$ = createExpr_Node(OP , $1 , $3 , '||'); }	
+	|	func_call						{ $$ = $1; } 
 	;
 str_expr :  VAR                       {}
               | str_expr VAR   { }

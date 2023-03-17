@@ -16,11 +16,15 @@
  */
 
 %{
-	#include "y.tab.h"
-	// #define YYSTYPE NODPTR
-    int 	Lineno;
-    int     wflag;
-    extern YYSTYPE yylval;
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+#include "syntax_tree.h"
+#include "y.tab.h"
+    // #define YYSTYPE NODPTR
+int 	Lineno;
+int     wflag;
+extern YYSTYPE yylval;
 %}
 
 %option noyywrap
@@ -55,13 +59,13 @@ letter	[a-zA-Z]
 "NOT"		                    {return LOGICAL_NOT;}                		
 "true"		                    {return T;}                		
 "false"		                    {return F;}                		
-{digit}+	                    {return NUM;}
-{letter}({letter}|{digit})*	 	{return VAR;}
-[-+*/=()><;,\{\}\[\]\%]         {return ;}
-["]                             {return ;}
-"\\n"                           {}
-[ \t]				            {}
-.						        {return ;}
+{digit}+	                    {yylval.numValue = atoi(yytext) ; return NUM;}
+{letter}({letter}|{digit})*	 	{yylval.var_name =strdup(yytext) ; return VAR;}
+[-+*/=()><;,\{\}\[\]\%]         {return yytext[0];}
+["]                             {return yytext[0];}                          
+[\n]                            {Lineno++;}
+[ \t]				            ;
+.						        {return yytext[0];}
 
 %%
 
