@@ -11,7 +11,7 @@ struct expr_node
     int const_val;
     bool bool_val;
     char* name;
-    vector<int> index_list; 
+    vector<expr_node> index_list; 
     struct expr_node* params ;  
     struct expr_node* left;
     struct expr_node* right;
@@ -95,4 +95,6 @@ struct stmt_list
 
 
 /* NODES CREATION */
-struct expr_node* createExpr_Node(expr_type type ,  struct expr_node* left=NULL , struct expr_node* right=NULL , char op = '\0' , int const_val = 0 , bool val = true , char *var_name = nullptr , vector<int> index_ls  , struct expr_node* params=NULL) ;
+struct expr_node* createExpr_Node(expr_type type ,  struct expr_node* left=NULL , struct expr_node* right=NULL , char op = '\0' , int const_val = 0 , bool val = true , char *var_name = nullptr , struct expr_node* params=NULL) ;
+
+struct stmt_list* create_Assign_Stmt(struct expr_node* var_node , struct expr_node* expr);

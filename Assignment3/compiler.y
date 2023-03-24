@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include<string.h>
 #include<iostream>
+#include<vector>
 using namespace std;
 #include "syntax_tree.h"
 #include "sym_table.h"
@@ -63,15 +64,22 @@ void warning(char const *s, char const *t);
 
 	/* adding types */
 %type <expr_ptr> expr
-%type <expr_ptr> func_call 
+// %type <expr_ptr> func_call 
 %type <expr_ptr> var_expr
 %type <expr_ptr> param_list
 %type <expr_ptr> param_list1
 %type <expr_ptr> para
+%type <stmt_list_ptr> Prog
+%type <stmt_list_ptr> MainBlock
+%type <stmt_list_ptr> assign_stmt
+%type <stmt_list_ptr> statement
+%type <stmt_list_ptr> stmt_list
+
 
 %%
 
-Prog	:	Gdecl_sec Fdef_sec MainBlock
+Prog	:	Gdecl_sec MainBlock
+	// Gdecl_sec Fdef_sec MainBlock
 	;
 	
 Gdecl_sec:	DECL Gdecl_list ENDDECL{}
@@ -89,56 +97,58 @@ ret_type:	T_INT		{ }
 	;
 	
 Glist 	:	Gid
-	| 	func 
+	// | 	func 
 	|	Gid ',' Glist 
-	|	func ',' Glist
+	// |	func ',' Glist
 	;
 
 Gid	:	VAR		{ 				}
 	|	Gid '[' NUM ']'	{                                                   }		;
 	
 	// doubt in arg_list structure
-func 	:	VAR '(' arg_list ')' 					{ 					}
+// func 	:	VAR '(' arg_list ')' 					{ 					}
+// 	;
+		
+// arg_list:	
+// 	|	arg_list1
+// 	;
+	
+// arg_list1:	arg_list1 ';' arg		
+// 	|	arg
+// 	;
+	
+// arg 	:	arg_type var_list	
+// 	;
+	
+// arg_type:	T_INT		 {  }
+// 	|	T_BOOL 		 { }
+	// ;
+
+// var_list:	VAR 		 { }
+// 	|	VAR ',' var_list { 	}
+// 	;
+	
+// Fdef_sec:	
+// 	|	Fdef_sec Fdef
+// 	;
+	
+// Fdef	:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	{	 				}
+// 	;
+	
+// func_ret_type:	T_INT		{ }
+// 	|	T_BOOL		{ }
+// 	;
+		
+// func_name:	VAR		{ 					}
+// 	;
+	
+// FargList:	arg_list	{ 					}
+// 	;
+
+ret_stmt:	RETURN expr ';'	{ }
 	;
 		
-arg_list:	
-	|	arg_list1
-	;
-	
-arg_list1:	arg_list1 ';' arg		
-	|	arg
-	;
-	
-arg 	:	arg_type var_list	
-	;
-	
-arg_type:	T_INT		 {  }
-	|	T_BOOL 		 { }
-	;
-var_list:	VAR 		 { }
-	|	VAR ',' var_list { 	}
-	;
-	
-Fdef_sec:	
-	|	Fdef_sec Fdef
-	;
-	
-Fdef	:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	{	 				}
-	;
-	
-func_ret_type:	T_INT		{ }
-	|	T_BOOL		{ }
-	;
-		
-func_name:	VAR		{ 					}
-	;
-	
-FargList:	arg_list	{ 					}
-	;
-ret_stmt:	RETURN expr ';'	{ 					}
-	;
-		
-MainBlock: 	func_ret_type main '('')''{' Ldecl_sec BEG stmt_list ret_stmt END  '}'		{ 				  	  }
+MainBlock: 	func_ret_type main '('')''{' Ldecl_sec BEG stmt_list ret_stmt END  '}'		{  }
 				  
 	;
 	
@@ -161,46 +171,47 @@ Lid_list:	Lid
 	
 Lid	:	VAR			{ 						}
 	;
-stmt_list:	/* NULL */		{  }
-	|	statement stmt_list	{						}
-	|	error ';' 		{  }
+stmt_list:	/* NULL {  } */		
+	|	statement stmt_list	{ $1 -> next = $2 ; $$ = $1 ; }
+	// |	error ';' 		{  }
 	;
-statement:	assign_stmt  ';'		{ 							 }
-	|	read_stmt ';'		{ }
-	|	write_stmt ';'		{ }
-	|	cond_stmt 		{ }
-	|	func_stmt ';'		{ }
+statement:	assign_stmt  ';'		{ $$ = $1; }
+	// |	read_stmt ';'		{ }
+	// |	write_stmt ';'		{ }
+	// |	cond_stmt 		{ }
+	// |	func_stmt ';'		{ }
 	;
-read_stmt:	READ '(' var_expr ')' {						 }
-	;
-write_stmt:	WRITE '(' expr ')' 	{  }
-	 | WRITE '(''"' str_expr '"'')'      { }
+// read_stmt:	READ '(' var_expr ')' {						 }
+// 	;
+// write_stmt:	WRITE '(' expr ')' 	{  }
+// 	 | WRITE '(''"' str_expr '"'')'      { }
+// 	;
+
+assign_stmt:	var_expr '=' expr 	{ $$ = create_Assign_Stmt($1 , $2); }
 	;
 
-assign_stmt:	var_expr '=' expr 	{ 						}
-	;
-cond_stmt:	IF expr THEN stmt_list ENDIF 	{ 						}
-	|	IF expr THEN stmt_list ELSE stmt_list ENDIF 	{ 						}
-	|	WHILE expr DO stmt_list ENDWHILE ';'{ 						}
-	//  |    FOR '(' assign_stmt  ';'  expr ';'  assign_stmt ')' '{' stmt_list '}'                                             {                                                 }
-	;
+// cond_stmt:	IF expr THEN stmt_list ENDIF 	{ 						}
+// 	|	IF expr THEN stmt_list ELSE stmt_list ENDIF 	{ 						}
+// 	|	WHILE expr DO stmt_list ENDWHILE ';'{ 						}
+// 	//  |    FOR '(' assign_stmt  ';'  expr ';'  assign_stmt ')' '{' stmt_list '}'                                             {                                                 }
+// 	;
 
-func_stmt:	func_call 		{ 						}
-	;
+// func_stmt:	func_call 		{ 						}
+	// ;
 	
-func_call:	VAR '(' param_list ')'		{ $$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , '\0' , 0 , $1 , NULL); $$->params = $3 -> params; }
-	;
+// func_call:	VAR '(' param_list ')'		{ $$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , '\0' , 0 , $1 , NULL); $$->params = $3 -> params; }
+// 	;
 	
-param_list:				
-	|	param_list1						{ $$ = $1 ; }
-	;
+// param_list:				
+// 	|	param_list1						{ $$ = $1 ; }
+// 	;
 	
-param_list1:	para					{ $$ = $1 ; $1 -> params = NULL; }	
-	|	para ',' param_list1			{ $1 -> params = $3 ; $$ = $1  ; }
-	;
+// param_list1:	para					{ $$ = $1 ; $1 -> params = NULL; }	
+// 	|	para ',' param_list1			{ $1 -> params = $3 ; $$ = $1  ; }
+// 	;
 
-para	:	expr						{ $$ = $1 ; }
-	;
+// para	:	expr						{ $$ = $1 ; }
+	// ;
 
 expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , '\0' , $1); }
 	|	'-' NUM							{ $$ = createExpr_Node(INTEGER , NULL , NULL , '\0' , -1*$1); }
@@ -222,13 +233,19 @@ expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , '\0' , $1); }
 	|	LOGICAL_NOT expr				{ $$ = createExpr_Node(OP , NULL , $3 , '!');}	
 	|	expr LOGICAL_AND expr			{ $$ = createExpr_Node(OP , $1 , $3 , '&&'); }	
 	|	expr LOGICAL_OR expr			{ $$ = createExpr_Node(OP , $1 , $3 , '||'); }	
-	|	func_call						{ $$ = $1; } 
+	// |	func_call						{ $$ = $1; } 
 	;
-str_expr :  VAR                       {}
-              | str_expr VAR   { }
-            ;
+// str_expr :  VAR                       {}
+//               | str_expr VAR   { }
+//             ;
 
-var_expr:	VAR	{ 				  }
-	|	var_expr '[' expr ']'	{                                                 }
+var_expr:	VAR					{$$ = createExpr_Node(VARIABLE , NULL , NULL , '\0' , 0 , true , $1); }
+	|	var_expr '[' expr ']'	
+	{ 	if($$ -> type != ARRAY_ELEMENT) 
+		{
+			$$ -> type = ARRAY_ELEMENT ;
+		}
+		($$->index_list).push_back($3) ;
+	}
 	;
 %%
