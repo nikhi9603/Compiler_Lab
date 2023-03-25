@@ -65,4 +65,16 @@ _Instructions to run_
 <br /> * _`test5.txt`_ : Undeclared variable in function call print statements.
 
 <br /> `make clean` : Removes intermediate and executable file.
+<br />
+<br />
+
+##### ASSIGNMENT3
+_Directory_ : Assignment3 
+
+**24-04-2023:** 
+<br/>* Designed structures of nodes which are part of syntax tree. (Declared expression tree nodes, declaration tree nodes and various types of statement nodes. And also written functions to create such nodes.) 
+<br/>* Production rule actions in yacc file were written except functions part(including main). 
+<br/>* Evaluation of syntax tree , symbol table , printing AST are left. Support for functions should be done.
+
+
 
