@@ -76,5 +76,7 @@ _Directory_ : Assignment3
 <br/>* Production rule actions in yacc file were written except functions part(including main). 
 <br/>* Evaluation of syntax tree , symbol table , printing AST are left. Support for functions should be done.
 
-
+**31-4-2023:**
+<br/>* Main function is also handled in the syntax tree creation now and conditional statements actions to their production rules were written. With this syntax tree creation is completed fully.
+<br/>* Evaluation of syntax tree , symbol table , printing AST are left. Support for functions should be done.
 
