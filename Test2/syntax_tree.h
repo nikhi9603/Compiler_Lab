@@ -67,7 +67,7 @@ struct func_definition_tree
 };
 
 // Statements
-enum stmt_type {DECL_STMT = 0 , ASSIGN = 1 , READ_STMT = 2, WRITE_STMT  = 3, CONDT = 4 , RETURN_STMT = 5 , FUNC_DEF = 6 , END_DECL = 7 , UNUSED_STMT = 7};
+enum stmt_type {DECL_STMT = 0 , ASSIGN = 1 , READ_STMT = 2, WRITE_STMT  = 3, CONDT = 4 , RETURN_STMT = 5 , FUNC_DEF = 6 , END_DECL = 7 , UNUSED_STMT = 8};
 
 union stmt_tree
 {
@@ -102,3 +102,4 @@ struct stmt_list* create_Main(int ret_type ,struct stmt_list* stmt_block , struc
 
 /* ABSTRACT SYNTAX TREE */
 void ast_printing(struct stmt_list* root , int mark);
+void print_expressions(struct expr_node* root);

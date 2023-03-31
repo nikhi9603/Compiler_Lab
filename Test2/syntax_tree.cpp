@@ -37,6 +37,7 @@ struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , stru
 				break;
         case ARRAY_ELEMENT:
                 newNode->name = var_name;
+				newNode->index = index;
 				break;	
 		case STRING_VAR:
 				newNode->name = var_name;
@@ -142,7 +143,7 @@ struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* conditio
 		case IF_ELSE:
 			new_stmt->tree.condt_stmt_tree->condition = condition;
 			new_stmt->tree.condt_stmt_tree->stmts1 = stmt1;
-			new_stmt->tree.condt_stmt_tree->stmts1 = stmt2;
+			new_stmt->tree.condt_stmt_tree->stmts2 = stmt2;
 			break;
 		case WHILE_CONDT:
 			new_stmt->tree.condt_stmt_tree->condition = condition;
@@ -323,7 +324,7 @@ void print_expressions(struct expr_node* root)
 				cout << "VAR " ;
 				break;
 			case ARRAY_ELEMENT:
-				cout << "VAR_ARRAY_ELEMENT " ;
+				cout << "VAR_ARRAY_ELEMENT VAR " ;
 				print_expressions(root->index);
 				break;
 			case STRING_VAR:
@@ -393,16 +394,8 @@ void ast_printing(struct stmt_list* root , int mark)
 			}
 			case ASSIGN:
 				cout << "ASSIGN " ;
-				if(root->tree.root->left->type == VARIABLE)
-				{
-					cout << "VAR " ;
-				}
-				else
-				{
-					cout << "VAR_ARRAY_ELEMENT " ;
-				}
-
 				print_expressions(root->tree.root->left);
+				print_expressions(root->tree.root->right);
 				cout << endl;
 				break;
 			case READ_STMT:
@@ -413,7 +406,8 @@ void ast_printing(struct stmt_list* root , int mark)
 				}
 				else
 				{
-					cout << "VAR_ARRAY_ELEMENT " ;
+					cout << "VAR_ARRAY_ELEMENT VAR " ;
+					print_expressions(root->tree.root->index) ;
 				}	
 				cout << endl;
 				break;
@@ -429,29 +423,30 @@ void ast_printing(struct stmt_list* root , int mark)
 				case IF_CONDT:
 					cout << "IF " ;
 					print_expressions(root->tree.condt_stmt_tree->condition) ;
-					cout << "THEN" ;
+					cout << "THEN" << endl ;
 					ast_printing(root->tree.condt_stmt_tree->stmts1 , mark);
-					cout << "ENDIF"  << endl;
+					cout  << "ENDIF"  << endl;
 					break;
 				case IF_ELSE:
 					cout << "IF " ;
 					print_expressions(root->tree.condt_stmt_tree->condition) ;
-					cout << "THEN" ;
+					cout << "THEN" << endl ; 
 					ast_printing(root->tree.condt_stmt_tree->stmts1 , mark);
-					cout << "ELSE" ;
+					cout << "ELSE" << endl;
 					ast_printing(root->tree.condt_stmt_tree->stmts2 , mark);
 					cout << "ENDIF"  << endl;
 					break;
 				case WHILE_CONDT:
 					cout << "WHILE " ;
 					print_expressions(root->tree.condt_stmt_tree->condition) ;
-					cout << "DO" ;
+					cout << "\n" << "DO" << endl ;
 					ast_printing(root->tree.condt_stmt_tree->stmts1 , mark);
 					cout << "ENDWHILE"  << endl;
 					break;
 				default:
 					break;
 				}
+				break;
 			}
 			case RETURN_STMT:
 				cout << "RETURN " ;
@@ -470,15 +465,18 @@ void ast_printing(struct stmt_list* root , int mark)
 				{
 					cout << "BOOL " ;
 				}
-				cout << " MAIN" << endl;
+				cout << "MAIN" << endl;
 				cout << "BEGIN" << endl;
 				ast_printing(root->tree.main_func_def_tree->stmt_block , mark) ;
 				ast_printing(root->tree.main_func_def_tree->return_stmt , mark) ;
 				cout << "END" << endl;
 				break;
+			case UNUSED_STMT:
+				return;
 			default:
 				break;
 		}
+		// cout << root->type << endl;
 		ast_printing(root->next , mark);
 	}
 	else

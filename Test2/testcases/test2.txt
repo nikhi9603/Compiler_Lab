@@ -13,9 +13,10 @@ begin
 		temp = temp + 1;
 	endwhile;
          temp=3;
+         read ( temp ) ;
 	if temp < 3  
     then
-		read ( temp ) ;
+		read ( temp[2] ) ;
     else  
         write ( c[1] ) ;
     endif

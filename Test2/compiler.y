@@ -102,6 +102,7 @@ Prog	:	Gdecl_sec MainBlock
 			  $$ = $1 ;
 			   
 			   ast_printing($$ , 0);
+
 			}
 	;
 	
@@ -139,9 +140,9 @@ MainBlock: 	func_ret_type MAIN '('')''{' BEG stmt_list ret_stmt END  '}'
 			  $$->line_num = lineno ; }    
 		 ;
 		
-stmt_list:	/* NULL */				{ $$ = NULL;}			
+stmt_list:	/* NULL */				{ $$ = create_unused_stmt();}			
 		 |	statement stmt_list			{ $1 -> next = $2 ; $$ = $1 ; }
-        //  | error ';' $$ = create_unused_stmt(); 
+		//  | error  					{yyerror}
 		 ;
 
 statement:	assign_stmt  ';'	{ $$ = $1; }

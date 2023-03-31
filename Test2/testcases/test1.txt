@@ -9,13 +9,12 @@ begin
 	       b[temp]=temp+5;
                c[temp]= a[temp]+b[temp];
 		temp = temp + 1;
-	end while;
+	endwhile
          temp=3;
 	if temp < 3  then
 		write(c[1]);
         else  
-                write(c[4]);
-        endif;
-	
+                write (c[4]);
+        endif
 end
 }
