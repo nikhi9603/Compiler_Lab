@@ -4,12 +4,13 @@
 using namespace std;
 
 /* EXPRESSION TREE NODE */
-struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right=NULL , char op  , int const_val  , bool val , char *name , struct expr_node* params) 
+struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right , op_type op  , int const_val  , bool val , char *var_name , struct expr_node* params) 
 {
     struct expr_node* newNode;
 
 	// allocating memory for newNodes
 	newNode = (struct expr_node*)malloc(sizeof(struct expr_node)) ;
+
 	
 	if(newNode == NULL)
 	{
@@ -33,17 +34,17 @@ struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , stru
                 newNode->bool_val = val;
 				break;	
         case VARIABLE:
-                newNode->name = name;
+                newNode->name = var_name;
 				break;
         case ARRAY_ELEMENT:
-                newNode->name = name;
+                newNode->name = var_name;
 				break;	
         case FUNCTION_CALL:
-                newNode->name = name;
+                newNode->name = var_name;
                 newNode->params = params;
                 break;
 		case STRING_VAR:
-				newNode->name = name;
+				newNode->name = var_name;
 				break;
         case UNUSED:
                 break;
@@ -92,12 +93,20 @@ struct stmt_list* create_Stmt(stmt_type type , struct expr_node* expr1 , struct 
 	switch (type)
 	{
 		case ASSIGN:
-			struct expr_node* node = createExpr_Node(OP , expr1 , expr2 , '=') ;
+		{
+			struct expr_node* node = createExpr_Node(OP , expr1 , expr2 , ASSIGN_OP) ;
 			new_stmt->tree.root = node ;
 			break;
-		case READ:
-		case WRITE:
+		}
+		case READ_STMT:
+			new_stmt->tree.root = expr1;
+			break;
+		case WRITE_STMT:
+			new_stmt->tree.root = expr1;
+			break;
 		case RETURN_STMT:
+			new_stmt->tree.root = expr1;
+			break;
 		case FUNC_CALL:
 			new_stmt->tree.root = expr1;
 			break;
@@ -113,20 +122,22 @@ struct stmt_list* create_Stmt(stmt_type type , struct expr_node* expr1 , struct 
 struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* condition , struct stmt_list* stmt1 , struct stmt_list* stmt2)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+	struct condtStmt_tree* condt_tree = (struct condtStmt_tree*)malloc(sizeof(struct condtStmt_tree)) ;
 
-	if(new_stmt == NULL)
+	if(new_stmt == NULL || condt_tree == NULL)
 	{
 		cerr << "Memory not available to allocate new stmt node\n" << endl ;
 		exit(0);
 	}
 
 	new_stmt->type = CONDT ;
+	new_stmt->tree.condt_stmt_tree = condt_tree ;
 	new_stmt->tree.condt_stmt_tree->type = type ;
 	new_stmt->next = NULL;
 
 	switch (type)
 	{
-		case IF:
+		case IF_CONDT:
 			new_stmt->tree.condt_stmt_tree->condition = condition;
 			new_stmt->tree.condt_stmt_tree->stmts1 = stmt1;
 			break;
@@ -135,7 +146,7 @@ struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* conditio
 			new_stmt->tree.condt_stmt_tree->stmts1 = stmt1;
 			new_stmt->tree.condt_stmt_tree->stmts1 = stmt2;
 			break;
-		case WHILE:
+		case WHILE_CONDT:
 			new_stmt->tree.condt_stmt_tree->condition = condition;
 			new_stmt->tree.condt_stmt_tree->stmts1 = stmt1;
 			break;
@@ -151,13 +162,15 @@ struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* conditio
 struct stmt_list* create_Enddecl_Stmt(decl_scope scope)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+	struct declstmt_tree* decl_tree = (struct declstmt_tree*)malloc(sizeof(struct declstmt_tree));
 
-	if(new_stmt == NULL)
+	if(new_stmt == NULL || decl_tree == NULL)
 	{
 		cerr << "Memory not available to allocate new stmt node\n" << endl ;
 		exit(0);
 	}
-	new_stmt->type = DECL ;
+	new_stmt->type = DECL_STMT ;
+	new_stmt->tree.decl_stmt_tree = decl_tree;
 	new_stmt->tree.decl_stmt_tree->scope = GLOBAL_SCOPE ;
 	new_stmt->tree.decl_stmt_tree->node = NULL;
 	new_stmt->next = NULL;
@@ -169,14 +182,16 @@ struct stmt_list* create_Enddecl_Stmt(decl_scope scope)
 struct stmt_list* create_Decl_Stmt(decl_scope scope , int ret_type , struct decl_node* node)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+	struct declstmt_tree* decl_tree = (struct declstmt_tree*)malloc(sizeof(struct declstmt_tree));
 
-	if(new_stmt == NULL)
+	if(new_stmt == NULL || decl_tree == NULL)
 	{
 		cerr << "Memory not available to allocate new stmt node\n" << endl ;
 		exit(0);
 	}
 
-	new_stmt->type = DECL;
+	new_stmt->type = DECL_STMT;
+	new_stmt->tree.decl_stmt_tree = decl_tree;
 	new_stmt->tree.decl_stmt_tree->scope = scope ;
 	new_stmt->tree.decl_stmt_tree->node = node;
 
@@ -189,5 +204,73 @@ struct stmt_list* create_Decl_Stmt(decl_scope scope , int ret_type , struct decl
 		new_stmt->tree.decl_stmt_tree->ret_type = DECL_INT;
 	}
 	new_stmt->next = NULL;
+	return new_stmt;
+}
+
+
+/* creating MAIN function */
+struct stmt_list* create_Main(int ret_type , char* fun_name , struct stmt_list *decl_block , struct stmt_list* stmt_block , struct stmt_list* return_stmt)
+{
+	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+	struct func_definition_tree* func_tree = (struct func_definition_tree*)malloc(sizeof(struct func_definition_tree)) ;
+
+	if(new_stmt == NULL || func_tree == NULL)
+	{
+		cerr << "Memory not available to allocate new stmt node\n" << endl ;
+		exit(0);
+	}
+
+	new_stmt->type = FUNC_DEF ;
+	new_stmt->tree.func_def_tree = func_tree ;
+	new_stmt->tree.func_def_tree->argList = NULL;
+	new_stmt->tree.func_def_tree->func_name = fun_name ;
+	new_stmt->tree.func_def_tree->decl_block = decl_block ;
+	new_stmt->tree.func_def_tree->stmt_block = stmt_block ;
+	new_stmt->tree.func_def_tree->return_stmt = return_stmt ;
+	new_stmt->next = NULL;
+
+	if(ret_type == 1)
+	{
+		new_stmt->tree.func_def_tree->ret_type = DECL_BOOL;
+	}
+	else
+	{
+		new_stmt->tree.func_def_tree->ret_type = DECL_INT;
+	}
+
+	return new_stmt;
+}
+
+
+/* unused statement creation */
+struct stmt_list* create_unused_stmt()
+{
+	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+
+	if(new_stmt == NULL)
+	{
+		cerr << "Memory not available to allocate new stmt node\n" << endl ;
+		exit(0);
+	}
+
+	new_stmt->type = UNUSED_STMT;
+	return new_stmt;
+}
+
+/* creating RETURN statement */
+struct stmt_list* create_return_stmt(struct expr_node *expr)
+{
+	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;	
+
+	if(new_stmt == NULL)
+	{
+		cerr << "Memory not available to allocate new stmt node\n" << endl ;
+		exit(0);
+	}
+
+	new_stmt->type = RETURN_STMT;
+	new_stmt->next = NULL ;
+	new_stmt->tree.root = expr;
+
 	return new_stmt;
 }
