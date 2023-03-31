@@ -101,4 +101,4 @@ struct stmt_list* create_return_stmt(struct expr_node *expr);
 struct stmt_list* create_Main(int ret_type ,struct stmt_list* stmt_block , struct stmt_list* return_stmt);
 
 /* ABSTRACT SYNTAX TREE */
-// struct 
+void ast_printing(struct stmt_list* root);

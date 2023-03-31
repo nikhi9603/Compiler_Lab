@@ -6,7 +6,7 @@ using namespace std;
 #include "syntax_tree.h"
 #include "y.tab.h"
 extern int 	lineno;
-int     wflag;
+// int     wflag;
 extern YYSTYPE yylval;
 %}
 

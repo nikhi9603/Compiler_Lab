@@ -262,3 +262,171 @@ struct stmt_list* create_return_stmt(struct expr_node *expr)
 
 	return new_stmt;
 }
+
+
+// Abstract syntax tree printing
+void print_expressions(struct expr_node* root)
+{
+	if(root != NULL)
+	{
+		// LEFT TREE
+		cout << "(" ;
+		print_expressions(root->left);
+		
+		switch (root->type)
+		{
+		case OP:
+		{
+			switch (root->op)
+			{
+				case PLUS_OP :
+					cout << "PLUS " ;
+					break;
+				case SUB_OP : 
+					cout << "SUB " ;
+					break;
+				case MUL_OP : 
+					cout << "MUL " ;
+					break;
+				case DIV_OP : 
+					cout << "DIV " ;
+					break;
+				case REMAINDER_OP : 
+					cout << "MODULO " ;
+					break;
+				case GREATERTHAN_OP : 
+					cout << "GREATERTHAN " ;
+					break;
+				case LESSTHAN_OP : 
+					cout << "LESSTHAN " ;
+					break;
+				case GREATERTHAN_EQUAL_OP : 
+					cout << "GREATERTHANOREQUAL " ;
+					break;
+				case LESSTHAN_EQUAL_OP : 
+					cout << "LESSTHANOREQUAL " ;
+					break;
+				case NOTEQUAL_OP : 
+					cout << "NOTEQUAL " ;
+					break;
+				case EQUALEQUAL_OP : 
+					cout << "EQUALEQUAL " ;
+					break;
+				default:
+					break;
+		}
+			break;
+		case INTEGER:
+			cout << "INTEGER " ;
+		case BOOL:
+			cout << "BOOL " ;
+		case VARIABLE:
+			cout << "VAR " ;
+		case ARRAY_ELEMENT:
+			cout << "VAR_ARRAY_ELEMENT " ;
+		case STRING_VAR:
+			cout << "STRING ";
+		default:
+			break;
+		
+		// RIGHT TREE
+		print_expressions(root->right);
+		cout << ")" ;
+		}
+		}
+	}
+}
+
+
+
+void ast_printing(struct stmt_list* root)
+{
+	if(root->type != END_DECL || root != NULL )
+	{
+		switch(root->type)
+		{
+			case DECL_STMT:
+				cout << "DECL " << root->tree.decl_stmt_tree->ret_type << " ";
+				cout << root->tree.decl_stmt_tree->node->name ;
+
+				while(root->tree.decl_stmt_tree->node != NULL)
+				{
+					if(root->tree.decl_stmt_tree->node->decl_type == VAR_NODE)
+					{
+						cout << " , " << "VAR" ;
+					}
+					else
+					{
+						cout << " , " << "VAR_ARRAY" ;
+					}
+				}
+				cout << endl;
+				break;
+			case ASSIGN:
+				cout << "ASSIGN " ;
+				if(root->tree.root->left->type == VARIABLE)
+				{
+					cout << "VAR " ;
+				}
+				else
+				{
+					cout << "VAR_ARRAY_ELEMENT " ;
+				}
+
+				print_expressions(root->tree.root->left);
+				cout << endl;
+				break;
+			case READ_STMT:
+				cout << "READ " ;
+				if(root->tree.root->type == VARIABLE)
+				{
+					cout << "VAR " ;
+				}
+				else
+				{
+					cout << "VAR_ARRAY_ELEMENT " ;
+				}	
+				cout << endl;
+				break;
+			case WRITE_STMT:
+				cout << "WRITE " ;
+				print_expressions(root->tree.root) ;
+				cout << endl;
+				break;
+			case CONDT:
+			{
+				switch (root->tree.condt_stmt_tree->type)
+				{
+				case IF_CONDT:
+					cout << "IF " ;
+					print_expressions(root->tree.condt_stmt_tree->condition) ;
+					cout << "THEN" ;
+					ast_printing(root->tree.condt_stmt_tree->stmts1);
+					cout << "ENDIF"  << endl;
+					break;
+				case IF_ELSE:
+					cout << "IF " ;
+					print_expressions(root->tree.condt_stmt_tree->condition) ;
+					cout << "THEN" ;
+					ast_printing(root->tree.condt_stmt_tree->stmts1);
+					cout << "ELSE" ;
+					ast_printing(root->tree.condt_stmt_tree->stmts2);
+					cout << "ENDIF"  << endl;
+					break;
+				case WHILE_CONDT:
+					cout << "WHILE " ;
+					print_expressions(root->tree.condt_stmt_tree->condition) ;
+					cout << "DO" ;
+					ast_printing(root->tree.condt_stmt_tree->stmts1);
+					cout << "ENDWHILE"  << endl;
+					break;
+				default:
+					break;
+				}
+			}
+					
+		}
+	}
+	
+}
+

@@ -86,3 +86,5 @@ _Directory_ : Assignment3
 <br/>* commit - 2: Restored the grammar , lex file from previous labs and modified the production rules and tokens
 <br/>* commit - 3: Restored syntax_tree.h , syntax_tree.cpp and modified according to the changes in the grammar
 <br/>* commit - 4: Created Makefile and resolved errors
+<br/>* commit - 5: started abstract syntax tree printing and print function for syntax tree of expression is done
+

@@ -28,7 +28,7 @@ using namespace std;
 	// void yyerror( char* );
 int main(int argc, char *argv[]);
 void yyerror(char const  *s);
-void execerror(char *s , char*t);
+// void execerror(char *s , char*t);
 void warning(char const *s, char const *t);
 int yylex();
 int lineno = 1 ;
@@ -91,7 +91,17 @@ int lineno = 1 ;
 
 %%
 
-Prog	:	Gdecl_sec MainBlock
+Prog	:	Gdecl_sec MainBlock			
+			{ 
+			  struct stmt_list* temp = $1 ;
+			  while(temp->type != ENDDECL)
+			  {
+				temp = temp->next;
+			  }
+			  temp -> next = $2;
+			   
+			   ast_printing($1);
+			}
 	;
 	
 Gdecl_sec:	DECL Gdecl_list ENDDECL { $$ = $2 ; }
@@ -130,6 +140,7 @@ MainBlock: 	func_ret_type MAIN '('')''{' BEG stmt_list ret_stmt END  '}'
 		
 stmt_list:	/* NULL {  } */				{ $$ = create_unused_stmt(); }	
 		 |	statement stmt_list			{ $1 -> next = $2 ; $$ = $1 ; }
+        //  | error ';'
 		 ;
 
 statement:	assign_stmt  ';'	{ $$ = $1; }
