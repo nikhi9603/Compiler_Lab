@@ -6,7 +6,7 @@
 #include<string>
 using namespace std ;
 
-enum symbol_type { VAR_SYM = 0 , VAR_ARRAY_SYM } ;
+enum symbol_type { VAR_SYM = 0 , VAR_ARRAY_SYM = 1 , SYM_ARRAY_ELEMENT = 2} ;
 enum define_check { DEF = 1 , UNDEF = 0 , UNDECL = 2 } ;
 enum symbol_value_type { INT_SYM = 0 , BOOL_SYM = 1};
 

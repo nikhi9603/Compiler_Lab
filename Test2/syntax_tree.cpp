@@ -10,7 +10,6 @@ struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , stru
 
 	// allocating memory for newNodes
 	newNode = (struct expr_node*)malloc(sizeof(struct expr_node)) ;
-
 	
 	if(newNode == NULL)
 	{
@@ -207,7 +206,7 @@ struct stmt_list* create_Main(int ret_type , struct stmt_list* stmt_block , stru
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
 	struct func_definition_tree *func_tree = (struct func_definition_tree*)malloc(sizeof(struct func_definition_tree));
 
-	if(new_stmt == NULL)
+	if(new_stmt == NULL || func_tree == NULL)
 	{
 		cerr << "Memory not available to allocate new stmt node\n" << endl ;
 		exit(0);
@@ -270,104 +269,128 @@ struct stmt_list* create_return_stmt(struct expr_node *expr)
 void print_expressions(struct expr_node* root)
 {
 	if(root != NULL)
-	{
-		// LEFT TREE
-		cout << "(" ;
-		print_expressions(root->left);
-		
+	{	
 		switch (root->type)
 		{
-		case OP:
-		{
-			switch (root->op)
+			case OP:
 			{
-				case PLUS_OP :
-					cout << "PLUS " ;
-					break;
-				case SUB_OP : 
-					cout << "SUB " ;
-					break;
-				case MUL_OP : 
-					cout << "MUL " ;
-					break;
-				case DIV_OP : 
-					cout << "DIV " ;
-					break;
-				case REMAINDER_OP : 
-					cout << "MODULO " ;
-					break;
-				case GREATERTHAN_OP : 
-					cout << "GREATERTHAN " ;
-					break;
-				case LESSTHAN_OP : 
-					cout << "LESSTHAN " ;
-					break;
-				case GREATERTHAN_EQUAL_OP : 
-					cout << "GREATERTHANOREQUAL " ;
-					break;
-				case LESSTHAN_EQUAL_OP : 
-					cout << "LESSTHANOREQUAL " ;
-					break;
-				case NOTEQUAL_OP : 
-					cout << "NOTEQUAL " ;
-					break;
-				case EQUALEQUAL_OP : 
-					cout << "EQUALEQUAL " ;
-					break;
-				default:
-					break;
+				switch (root->op)
+				{
+					case PLUS_OP :
+						cout << "PLUS " ;
+						break;
+					case SUB_OP : 
+						cout << "SUB " ;
+						break;
+					case MUL_OP : 
+						cout << "MUL " ;
+						break;
+					case DIV_OP : 
+						cout << "DIV " ;
+						break;
+					case REMAINDER_OP : 
+						cout << "MODULO " ;
+						break;
+					case GREATERTHAN_OP : 
+						cout << "GREATERTHAN " ;
+						break;
+					case LESSTHAN_OP : 
+						cout << "LESSTHAN " ;
+						break;
+					case GREATERTHAN_EQUAL_OP : 
+						cout << "GREATERTHANOREQUAL " ;
+						break;
+					case LESSTHAN_EQUAL_OP : 
+						cout << "LESSTHANOREQUAL " ;
+						break;
+					case NOTEQUAL_OP : 
+						cout << "NOTEQUAL " ;
+						break;
+					case EQUALEQUAL_OP : 
+						cout << "EQUALEQUAL " ;
+						break;
+					default:
+						break;
+			}
+				break;
+			case INTEGER:
+				cout << "NUM " ;
+				break;
+			case BOOL:
+				cout << "BOOL_VAL " ;
+				break;
+			case VARIABLE:
+				cout << "VAR " ;
+				break;
+			case ARRAY_ELEMENT:
+				cout << "VAR_ARRAY_ELEMENT " ;
+				print_expressions(root->index);
+				break;
+			case STRING_VAR:
+				cout << "STRING ";
+				break;
+			default:
+				break;
+			}
 		}
-			break;
-		case INTEGER:
-			cout << "INTEGER " ;
-		case BOOL:
-			cout << "BOOL " ;
-		case VARIABLE:
-			cout << "VAR " ;
-		case ARRAY_ELEMENT:
-			cout << "VAR_ARRAY_ELEMENT " ;
-		case STRING_VAR:
-			cout << "STRING ";
-		default:
-			break;
-		
+		// LEFT TREE
+		print_expressions(root->left);
 		// RIGHT TREE
 		print_expressions(root->right);
-		cout << ")" ;
-		}
-		}
+		
 	}
 }
 
 
 void ast_printing(struct stmt_list* root , int mark)
 {
-	if(root->type != END_DECL || root != NULL )
+	if( root != NULL )
 	{
 		switch(root->type)
 		{
 			case DECL_STMT:
+			{
 				if(mark == 0)
 				{
 					cout << "DECL" << endl;
 					mark = 1 ;
 				}
-				cout << root->tree.decl_stmt_tree->ret_type << " ";
-				cout << root->tree.decl_stmt_tree->node->name ;
 
-				while(root->tree.decl_stmt_tree->node != NULL)
+				if(root->tree.decl_stmt_tree->ret_type == 0)
 				{
-					if(root->tree.decl_stmt_tree->node->decl_type == VAR_NODE)
+					cout << "INTEGER ";
+				}
+				else
+				{
+					cout << "BOOL " ;
+				}
+				
+				if(root->tree.decl_stmt_tree->node->decl_type == VAR_NODE)
+				{
+					cout << "VAR" ;
+				}
+				else
+				{
+					cout << "VAR_ARRAY " << root->tree.decl_stmt_tree->node->array_size ;
+				}
+
+				struct decl_node* temp = root->tree.decl_stmt_tree->node ;
+				while(temp != NULL)
+				{
+					if(temp->decl_type == VAR_NODE)
 					{
 						cout << " , " << "VAR" ;
 					}
 					else
 					{
-						cout << " , " << "VAR_ARRAY" ;
+						cout << " , " << "VAR_ARRAY " << temp->array_size ;
 					}
+
+					temp = temp -> next;
 				}
 				cout << endl;
 				break;
+			}
 			case ASSIGN:
 				cout << "ASSIGN " ;
 				if(root->tree.root->left->type == VARIABLE)
@@ -439,7 +462,15 @@ void ast_printing(struct stmt_list* root , int mark)
 				cout << "ENDDECL" << endl;
 				break;
 			case FUNC_DEF:
-				cout << root->tree.main_func_def_tree->ret_type << " MAIN" << endl;
+				if(root->tree.main_func_def_tree->ret_type == 0)
+				{
+					cout << "INTEGER ";
+				}
+				else
+				{
+					cout << "BOOL " ;
+				}
+				cout << " MAIN" << endl;
 				cout << "BEGIN" << endl;
 				ast_printing(root->tree.main_func_def_tree->stmt_block , mark) ;
 				ast_printing(root->tree.main_func_def_tree->return_stmt , mark) ;
@@ -448,6 +479,11 @@ void ast_printing(struct stmt_list* root , int mark)
 			default:
 				break;
 		}
+		ast_printing(root->next , mark);
+	}
+	else
+	{
+		return ;
 	}
 }
 

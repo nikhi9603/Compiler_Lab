@@ -94,14 +94,14 @@ int lineno = 1 ;
 Prog	:	Gdecl_sec MainBlock			
 			{ 
 			  struct stmt_list* temp = $1 ;
-			  while(temp->type != ENDDECL)
+			  while(temp->type != END_DECL)
 			  {
 				temp = temp->next;
 			  }
 			  temp -> next = $2;
 			  $$ = $1 ;
 			   
-			//    ast_printing($$ , 0);
+			   ast_printing($$ , 0);
 			}
 	;
 	
@@ -136,12 +136,12 @@ ret_stmt:	RETURN expr ';'		{ $$ = create_return_stmt($2); $$->line_num = lineno;
 		
 MainBlock: 	func_ret_type MAIN '('')''{' BEG stmt_list ret_stmt END  '}'		
 			{ $$ = create_Main($1 , $7 , $8);
-			  $$->line_num = lineno ; }     //change required
+			  $$->line_num = lineno ; }    
 		 ;
 		
-stmt_list:	/* NULL {  } */				{ $$ = create_unused_stmt(); }	
+stmt_list:	/* NULL */				{ $$ = NULL;}			
 		 |	statement stmt_list			{ $1 -> next = $2 ; $$ = $1 ; }
-        //  | error ';'
+        //  | error ';' $$ = create_unused_stmt(); 
 		 ;
 
 statement:	assign_stmt  ';'	{ $$ = $1; }
