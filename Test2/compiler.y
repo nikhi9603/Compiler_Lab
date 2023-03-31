@@ -17,17 +17,20 @@
 
 %{	
 #include <stdio.h>
+#include<stdlib.h>
 #include<string.h>
 #include<iostream>
 #include<vector>
 using namespace std;
 #include "syntax_tree.h"
 	// #include "sym_table.h"
-int yylex();
+
 	// void yyerror( char* );
 int main(int argc, char *argv[]);
-void yyerror(char const *s);
+void yyerror(char const  *s);
+void execerror(char *s , char*t);
 void warning(char const *s, char const *t);
+int yylex();
 int lineno = 1 ;
 	// int i;	
 %}
@@ -46,7 +49,7 @@ int lineno = 1 ;
 %token DECL ENDDECL
 %token <var_name> VAR 
 %token <numValue> NUM
-%token <var_name> MAIN 
+%token MAIN 
 %token IF THEN ELSE ENDIF
 %token EQUALEQUAL LESSTHANOREQUAL GREATERTHANOREQUAL NOTEQUAL
 %token WHILE DO ENDWHILE FOR 
@@ -83,8 +86,6 @@ int lineno = 1 ;
 %type <decl_node_ptr> Gid
 
 %type <numValue> func_ret_type
-%type <var_name> main
-
 %type <stmt_list_ptr> ret_stmt
 
 
@@ -111,7 +112,7 @@ Glist 	:	Gid					{ $$ = $1; }
 		|	Gid ',' Glist 		{ $1->next = $3; $$ = $1 ; }
 		;
 
-Gid	:	VAR					 { $$ = createDecl_Node(VAR_NODE , $1); }
+Gid	:	VAR					 { $$ = createDecl_Node(VAR_NODE , $1 , 0); }
 		|	VAR '[' NUM ']'	 { $$ = createDecl_Node(VAR_ARR_NODE , $1 , $3); }
 		;
 	
@@ -176,24 +177,21 @@ str_expr : VAR           { $$ = createExpr_Node(STRING_VAR , NULL , NULL , PLUS_
          ;
 
 var_expr:	VAR					{ $$ = createExpr_Node(VARIABLE , NULL , NULL , PLUS_OP , 0 , true , $1); }
-	|	var_expr '[' expr ']'	
-	{ 	
-		if($1 -> type == VARIABLE) 
-		{
-			$1 -> type = ARRAY_ELEMENT ;
-		}
-		$1->params = $3 ;
-		$$ =$1;
-	}
+	|	VAR '[' expr ']'	    { $$ = createExpr_Node(ARRAY_ELEMENT , NULL , NULL , PLUS_OP , 0 , true , $1 , $3); }
 	;
 %%
 
-
+#include <stdio.h>
 #include <ctype.h>
 char *progname;	/* for error messages */
+#include <signal.h>
+#include <setjmp.h>
+jmp_buf	begin;
+
 int main(int argc, char *argv[])
 {  
     progname = argv[0];
+    // setjmp(begin);
     yyparse();
     return 0;
 }
@@ -203,10 +201,16 @@ void yyerror(char const *s)
     warning(s, (char *)0);
 }
 
+// void execerror(char *s, char *t)	
+// {
+// 	warning(s, t);
+//     // longjmp(begin, 0);
+// }
+
 void warning(char const *s, char const *t)	/* print warning message */
 {
     fprintf(stderr, "%s: %s", progname, s);
-    if (t)
+    if (t && *t)
         fprintf(stderr, " %s", t);
     fprintf(stderr, " near line %d\n", lineno);
 }

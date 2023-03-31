@@ -86,7 +86,7 @@ struct stmt_list
 };
 
 /* NODES CREATION */
-struct expr_node* createExpr_Node(expr_type type ,  struct expr_node* left=NULL , struct expr_node* right=NULL , op_type op = PLUS_OP , int const_val = 0 , bool val = true , char *var_name = NULL, struct expr_node* params=NULL) ;
+struct expr_node* createExpr_Node(expr_type type ,  struct expr_node* left=NULL , struct expr_node* right=NULL , op_type op = PLUS_OP , int const_val = 0 , bool val = true , char *var_name = NULL, struct expr_node* index=NULL) ;
 struct decl_node* createDecl_Node(decl_node_type type , char* name , int size);
 
 /* STATEMENTS CREATION */

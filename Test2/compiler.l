@@ -44,7 +44,6 @@ letter	[a-zA-Z]
 ["]                             {return yytext[0];}                          
 [\n]                            {lineno++;}
 [ \t]				            ;
-    // <<EOF>>                         {yywrap(); return 0;}
 .						        {return yytext[0];}
 
 %%
@@ -53,3 +52,4 @@ letter	[a-zA-Z]
 // {
 // 	return 1;
 // }
+// <<EOF>>                         {yywrap(); return 0;}

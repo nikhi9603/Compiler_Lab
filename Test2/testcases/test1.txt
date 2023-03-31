@@ -1,0 +1,21 @@
+decl
+	integer a[5],b[5],c[5],temp;
+enddecl
+integer main(){
+begin   
+       temp=0;
+	while temp < 5 do
+	       a[temp]=temp+2;	
+	       b[temp]=temp+5;
+               c[temp]= a[temp]+b[temp];
+		temp = temp + 1;
+	end while;
+         temp=3;
+	if temp < 3  then
+		write(c[1]);
+        else  
+                write c[4];
+        endif;
+	
+end
+}

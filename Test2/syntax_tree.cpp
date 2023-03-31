@@ -4,7 +4,7 @@
 using namespace std;
 
 /* EXPRESSION TREE NODE */
-struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right , op_type op  , int const_val  , bool val , char *var_name) 
+struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right , op_type op  , int const_val  , bool val , char *var_name , struct expr_node* index) 
 {
     struct expr_node* newNode;
 
