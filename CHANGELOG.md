@@ -88,5 +88,6 @@ _Directory_ : Assignment3
 <br/>* commit - 4: Created Makefile and resolved errors
 <br/>* commit - 5: started abstract syntax tree printing and print function for syntax tree of expression is done
 <br/>* commit - 6: AST printing code is wriiten but errors should be debugged
+<br/>* commit - 7: Symbol table has been restored and complete modifications as per this grammar is not completed
 
 
