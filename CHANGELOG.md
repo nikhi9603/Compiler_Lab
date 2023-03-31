@@ -84,3 +84,4 @@ _Directory_ : Assignment3
 ##### TEST2
 <br/>* commit - 1: starting the exam by creating directory Test2
 <br/>* commit - 2: Restored the grammar , lex file from previous labs and modified the production rules and tokens
+<br/>* commit - 3: Restored syntax_tree.h , syntax_tree.cpp and modified according to the changes in the grammar

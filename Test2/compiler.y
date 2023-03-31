@@ -82,13 +82,7 @@ int lineno = 1 ;
 %type <decl_node_ptr> Glist
 %type <decl_node_ptr> Gid
 
-%type <stmt_list_ptr> Ldecl_sec
-%type <stmt_list_ptr> Ldecl_list
-%type <stmt_list_ptr> Ldecl
 %type <numValue> func_ret_type
-%type <decl_node_ptr> Lid_list
-%type <decl_node_ptr> Lid
-%type <numValue> type
 %type <var_name> main
 
 %type <stmt_list_ptr> ret_stmt
@@ -102,11 +96,11 @@ Prog	:	Gdecl_sec MainBlock
 Gdecl_sec:	DECL Gdecl_list ENDDECL { $$ = $2 ; }
 	;
 	
-Gdecl_list: /*	NULL */			{ $$ = create_Enddecl_Stmt(GLOBAL_SCOPE); }
+Gdecl_list: /*	NULL */			{ $$ = create_Enddecl_Stmt(); }
 		| 	Gdecl Gdecl_list 	{ $1->next = $2; $$ = $1; }
 		;
 	
-Gdecl 	:	ret_type Glist ';'	{ $$ = create_Decl_Stmt(GLOBAL_SCOPE , $1 , $2); $$->line_num = lineno; }
+Gdecl 	:	ret_type Glist ';'	{ $$ = create_Decl_Stmt($1 , $2); $$->line_num = lineno; }
 		;
 	
 ret_type:	T_INT	{ $$ = 0 ;}
@@ -118,15 +112,7 @@ Glist 	:	Gid					{ $$ = $1; }
 		;
 
 Gid	:	VAR					 { $$ = createDecl_Node(VAR_NODE , $1); }
-		|	VAR '[' NUM ']'	 // change required
-		{
-			if($1->decl_type == VAR_NODE)
-			{
-				$1->decl_type = VAR_ARR_NODE ;
-			}
-			$1->args = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $3); 
-			$$ =$1;
-		}
+		|	VAR '[' NUM ']'	 { $$ = createDecl_Node(VAR_ARR_NODE , $1 , $3); }
 		;
 	
 func_ret_type:	T_INT		{ $$ = 0 ; }
@@ -136,13 +122,10 @@ func_ret_type:	T_INT		{ $$ = 0 ; }
 ret_stmt:	RETURN expr ';'		{ $$ = create_return_stmt($2); $$->line_num = lineno; }
 		;
 		
-MainBlock: 	func_ret_type main '('')''{' BEG stmt_list ret_stmt END  '}'		
-			{ $$ = create_Main($1 , $2 , $6 , $8 , $9);
+MainBlock: 	func_ret_type MAIN '('')''{' BEG stmt_list ret_stmt END  '}'		
+			{ $$ = create_Main($1 , $7 , $8);
 			  $$->line_num = lineno ; }     //change required
 		 ;
-	
-main	:	MAIN	{ $$ = $1;}
-		;
 		
 stmt_list:	/* NULL {  } */				{ $$ = create_unused_stmt(); }	
 		 |	statement stmt_list			{ $1 -> next = $2 ; $$ = $1 ; }

@@ -5,13 +5,12 @@
 using namespace std;
 #include "syntax_tree.h"
 #include "y.tab.h"
-    // #define YYSTYPE NODPTR
 extern int 	lineno;
 int     wflag;
 extern YYSTYPE yylval;
 %}
 
-    // %option noyywrap
+%option noyywrap
 digit	[0-9]
 letter	[a-zA-Z]
 
@@ -33,7 +32,6 @@ letter	[a-zA-Z]
 "do"		                    {return DO;}                
 "while"		                    {return WHILE;}                
 "endwhile"	                    {return ENDWHILE;}                	
-"for" 		                    {return FOR;}                		
 "=="		                    {return EQUALEQUAL;}                
 "<="		                    {return LESSTHANOREQUAL;}                		
 ">="		                    {return GREATERTHANOREQUAL;}                		
@@ -46,12 +44,12 @@ letter	[a-zA-Z]
 ["]                             {return yytext[0];}                          
 [\n]                            {lineno++;}
 [ \t]				            ;
-<<EOF>>                         {yywrap(); return 0;}
+    // <<EOF>>                         {yywrap(); return 0;}
 .						        {return yytext[0];}
 
 %%
 
-int yywrap()
-{
-	return 1;
-}
+// int yywrap()
+// {
+// 	return 1;
+// }
