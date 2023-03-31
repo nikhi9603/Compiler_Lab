@@ -99,8 +99,9 @@ Prog	:	Gdecl_sec MainBlock
 				temp = temp->next;
 			  }
 			  temp -> next = $2;
+			  $$ = $1 ;
 			   
-			   ast_printing($1);
+			//    ast_printing($$ , 0);
 			}
 	;
 	

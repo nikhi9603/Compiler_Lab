@@ -205,6 +205,7 @@ struct stmt_list* create_Decl_Stmt(int ret_type , struct decl_node* node)
 struct stmt_list* create_Main(int ret_type , struct stmt_list* stmt_block , struct stmt_list* return_stmt)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+	struct func_definition_tree *func_tree = (struct func_definition_tree*)malloc(sizeof(struct func_definition_tree));
 
 	if(new_stmt == NULL)
 	{
@@ -213,17 +214,18 @@ struct stmt_list* create_Main(int ret_type , struct stmt_list* stmt_block , stru
 	}
 
 	new_stmt->type = FUNC_DEF ;
-	new_stmt->tree.main_func_def_tree.stmt_block = stmt_block ;
-	new_stmt->tree.main_func_def_tree.return_stmt = return_stmt ;
+	new_stmt->tree.main_func_def_tree = func_tree;
+	new_stmt->tree.main_func_def_tree->stmt_block = stmt_block ;
+	new_stmt->tree.main_func_def_tree->return_stmt = return_stmt ;
 	new_stmt->next = NULL;
 
 	if(ret_type == 1)
 	{
-		new_stmt->tree.main_func_def_tree.ret_type  = DECL_BOOL;
+		new_stmt->tree.main_func_def_tree->ret_type  = DECL_BOOL;
 	}
 	else
 	{
-		new_stmt->tree.main_func_def_tree.ret_type  = DECL_INT;
+		new_stmt->tree.main_func_def_tree->ret_type  = DECL_INT;
 	}
 
 	return new_stmt;
@@ -338,15 +340,19 @@ void print_expressions(struct expr_node* root)
 }
 
 
-
-void ast_printing(struct stmt_list* root)
+void ast_printing(struct stmt_list* root , int mark)
 {
 	if(root->type != END_DECL || root != NULL )
 	{
 		switch(root->type)
 		{
 			case DECL_STMT:
-				cout << "DECL " << root->tree.decl_stmt_tree->ret_type << " ";
+				if(mark == 0)
+				{
+					cout << "DECL" << endl;
+					mark = 1 ;
+				}
+				cout << root->tree.decl_stmt_tree->ret_type << " ";
 				cout << root->tree.decl_stmt_tree->node->name ;
 
 				while(root->tree.decl_stmt_tree->node != NULL)
@@ -401,32 +407,47 @@ void ast_printing(struct stmt_list* root)
 					cout << "IF " ;
 					print_expressions(root->tree.condt_stmt_tree->condition) ;
 					cout << "THEN" ;
-					ast_printing(root->tree.condt_stmt_tree->stmts1);
+					ast_printing(root->tree.condt_stmt_tree->stmts1 , mark);
 					cout << "ENDIF"  << endl;
 					break;
 				case IF_ELSE:
 					cout << "IF " ;
 					print_expressions(root->tree.condt_stmt_tree->condition) ;
 					cout << "THEN" ;
-					ast_printing(root->tree.condt_stmt_tree->stmts1);
+					ast_printing(root->tree.condt_stmt_tree->stmts1 , mark);
 					cout << "ELSE" ;
-					ast_printing(root->tree.condt_stmt_tree->stmts2);
+					ast_printing(root->tree.condt_stmt_tree->stmts2 , mark);
 					cout << "ENDIF"  << endl;
 					break;
 				case WHILE_CONDT:
 					cout << "WHILE " ;
 					print_expressions(root->tree.condt_stmt_tree->condition) ;
 					cout << "DO" ;
-					ast_printing(root->tree.condt_stmt_tree->stmts1);
+					ast_printing(root->tree.condt_stmt_tree->stmts1 , mark);
 					cout << "ENDWHILE"  << endl;
 					break;
 				default:
 					break;
 				}
 			}
-					
+			case RETURN_STMT:
+				cout << "RETURN " ;
+				print_expressions(root->tree.root);
+				cout << endl;
+				break;
+			case END_DECL:
+				cout << "ENDDECL" << endl;
+				break;
+			case FUNC_DEF:
+				cout << root->tree.main_func_def_tree->ret_type << " MAIN" << endl;
+				cout << "BEGIN" << endl;
+				ast_printing(root->tree.main_func_def_tree->stmt_block , mark) ;
+				ast_printing(root->tree.main_func_def_tree->return_stmt , mark) ;
+				cout << "END" << endl;
+				break;
+			default:
+				break;
 		}
 	}
-	
 }
 

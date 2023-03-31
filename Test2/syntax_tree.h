@@ -74,7 +74,7 @@ union stmt_tree
     struct declstmt_tree *decl_stmt_tree;
     struct expr_node *root;         // READ , WRITE , ASSIGN_STMT , RETURN_STMT 
     struct condtStmt_tree* condt_stmt_tree ;
-    struct func_definition_tree main_func_def_tree;
+    struct func_definition_tree* main_func_def_tree;
 };
 
 struct stmt_list
@@ -101,4 +101,4 @@ struct stmt_list* create_return_stmt(struct expr_node *expr);
 struct stmt_list* create_Main(int ret_type ,struct stmt_list* stmt_block , struct stmt_list* return_stmt);
 
 /* ABSTRACT SYNTAX TREE */
-void ast_printing(struct stmt_list* root);
+void ast_printing(struct stmt_list* root , int mark);

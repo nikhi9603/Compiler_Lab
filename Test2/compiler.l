@@ -10,7 +10,6 @@ extern int 	lineno;
 extern YYSTYPE yylval;
 %}
 
-%option noyywrap
 digit	[0-9]
 letter	[a-zA-Z]
 
@@ -44,12 +43,13 @@ letter	[a-zA-Z]
 ["]                             {return yytext[0];}                          
 [\n]                            {lineno++;}
 [ \t]				            ;
+<<EOF>>                         {yywrap(); return 0;}
 .						        {return yytext[0];}
 
 %%
 
-// int yywrap()
-// {
-// 	return 1;
-// }
-// <<EOF>>                         {yywrap(); return 0;}
+int yywrap()
+{
+	return 1;
+}
+
