@@ -89,5 +89,10 @@ _Directory_ : Assignment3
 <br/>* commit - 5: started abstract syntax tree printing and print function for syntax tree of expression is done
 <br/>* commit - 6: AST printing code is wriiten but errors should be debugged
 <br/>* commit - 7: Symbol table has been restored and complete modifications as per this grammar is not completed
+<br/>* commit - 8: Few errors of abstract syntax tree were removed. 
+<br/>* commit - 9: AST is working
+<br/>* commit - 10: Symbol table and its operations like lookup,insert,update completed without errors. And also all semantic error checking and printing is done.
+<br/> Syntax errors: Stopping at first syntax error.
+<br/> If no syntax error is present in file , then AST and all semantic errors are printed 
 
 
