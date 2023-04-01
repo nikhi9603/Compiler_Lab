@@ -103,3 +103,7 @@ struct stmt_list* create_Main(int ret_type ,struct stmt_list* stmt_block , struc
 /* ABSTRACT SYNTAX TREE */
 void ast_printing(struct stmt_list* root , int mark);
 void print_expressions(struct expr_node* root);
+
+/* SEMANTIC ERROR CHECKING */
+void expression_type_checking(struct expr_node* root , int line_num);
+void semantic_error_checking(struct stmt_list* root);

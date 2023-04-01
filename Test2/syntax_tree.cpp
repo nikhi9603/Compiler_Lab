@@ -1,7 +1,9 @@
 #include <iostream>
 #include "syntax_tree.h"
-// #include "sym_table.h"
+#include "sym_table.h"
 using namespace std;
+
+extern int error_check_var ;
 
 /* EXPRESSION TREE NODE */
 struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , struct expr_node* right , op_type op  , int const_val  , bool val , char *var_name , struct expr_node* index) 
@@ -172,6 +174,7 @@ struct stmt_list* create_Enddecl_Stmt()
 	return new_stmt;
 }
 
+
 /* DECLARATION  STATEMENT */
 struct stmt_list* create_Decl_Stmt(int ret_type , struct decl_node* node)
 {
@@ -244,6 +247,7 @@ struct stmt_list* create_unused_stmt()
 	}
 
 	new_stmt->type = UNUSED_STMT;
+	new_stmt->next = NULL;
 	return new_stmt;
 }
 
@@ -478,6 +482,232 @@ void ast_printing(struct stmt_list* root , int mark)
 		}
 		// cout << root->type << endl;
 		ast_printing(root->next , mark);
+	}
+	else
+	{
+		return ;
+	}
+}
+
+
+/* expression error,type checking */
+void expression_type_checking(struct expr_node* root , int line_num)
+{
+	if(root != NULL)
+	{
+		switch (root->type)
+		{
+			case OP:
+			{
+				switch (root->op)
+				{
+					case PLUS_OP:
+					case SUB_OP:
+					case MUL_OP:
+					case GREATERTHAN_OP:
+					case LESSTHAN_OP:
+					case GREATERTHAN_EQUAL_OP:
+					case LESSTHAN_EQUAL_OP:
+					case NOTEQUAL_OP:
+					case EQUALEQUAL_OP:
+					case ASSIGN_OP:
+						expression_type_checking(root->left , line_num);
+						expression_type_checking(root->right , line_num);
+
+						if( (root->right->type == INTEGER && root->left->type == BOOL) || (root->right->type == BOOL && root->left->type == INTEGER))
+						{
+							cout << "WARNING: Integer value and boolean value are invloved in arithmetic/logical operations: near line " << line_num << endl;
+						}
+						break;
+					case DIV_OP:
+					case REMAINDER_OP:
+					{
+						expression_type_checking(root->left , line_num);
+						expression_type_checking(root->right , line_num);
+
+						if( (root->right->type == INTEGER && root->left->type == BOOL) || (root->right->type == BOOL && root->left->type == INTEGER))
+						{
+							cout << "WARNING: Integer value and boolean value are invloved in arithmetic/logical operations: near line " << line_num << endl;
+						}
+
+						if( (root->right->type == INTEGER && root->right->const_val == 0) || (root->right->type == BOOL && root->right->bool_val == false) )
+						{
+							cerr << "ERROR:: Division by zero error near line " << line_num << endl;
+							error_check_var = 1;
+						}
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
+			case INTEGER:
+			case BOOL:
+			case STRING_VAR:
+				break;
+			case VARIABLE:
+			{
+				pair <define_check , symbol_type> temp;
+				temp = symbol_lookup(root->name) ;
+
+				if(temp.first == UNDECL)
+				{
+					cerr << "ERROR:: Undeclared variable " << root->name << " near line " << line_num << endl;
+					error_check_var = 1;
+				}
+
+				if(temp.second == VAR_ARRAY_SYM)
+				{
+					error_check_var = 1;
+					cerr << "ERROR:: Index value not given for variable '" << root->name << "' near line " << endl;
+				}
+
+				break;
+			}
+			case ARRAY_ELEMENT:
+			{
+				pair <define_check , symbol_type> temp;
+				temp = symbol_lookup(root->name) ;
+				
+				if(temp.first == UNDECL)
+				{
+					cerr << "ERROR:: Undeclared variable found near line " << line_num << endl;
+					error_check_var = 1;
+				}
+
+				if(temp.second == VAR_SYM)
+				{
+					error_check_var = 1;
+					cerr << "ERROR:: Variable '" << root->name << "' is not an array type: near line " << endl;
+				}
+				else
+				{
+					if(root->index->type == INTEGER)
+					{
+						if(root->index->const_val > symbol_table[root->name].size)
+						{
+							error_check_var = 1;
+							cerr << "ERROR:: Index out of bounds near line " <<  line_num << endl;
+						}
+					}
+				}
+				
+				break;
+			}
+			default:
+				break;
+		}
+	}
+}
+
+
+// Checking for errors in semantic Analysis - type checking , re-declaration , index out of bounds...
+void semantic_error_checking(struct stmt_list* root)
+{
+	if( root != NULL )
+	{
+		switch(root->type)
+		{
+			case DECL_STMT:
+			{
+				struct decl_node* temp = root->tree.decl_stmt_tree->node;
+				define_check temp_check;
+
+				while(temp != NULL)
+				{
+					switch (temp->decl_type)
+					{
+						case VAR_NODE:
+							if(root->tree.decl_stmt_tree->ret_type == DECL_INT)
+							{
+								temp_check = insert_symbol(temp->name , VAR_SYM , UNDEF , INT_SYM , 0);
+							}
+							else
+							{
+								temp_check = insert_symbol(temp->name , VAR_SYM , UNDEF , BOOL_SYM , 0);
+							}
+
+							if(temp_check == UNDEF || temp_check == DEF)
+							{
+								error_check_var = 1;
+								cerr << "ERROR:: Cannot declare variable '" << temp->name << "' again: line " << root->line_num << endl;
+							}
+							break;
+						case VAR_ARR_NODE:
+							if(root->tree.decl_stmt_tree->ret_type == DECL_INT)
+							{
+								temp_check = insert_symbol(temp->name , VAR_ARRAY_SYM , DEF , INT_SYM , temp->array_size);
+							}
+							else
+							{
+								temp_check = insert_symbol(temp->name , VAR_ARRAY_SYM , DEF , BOOL_SYM , temp->array_size);
+							}
+
+							if(temp_check == UNDEF || temp_check == DEF)
+							{
+								error_check_var = 1;
+								cerr << "ERROR:: Cannot declare variable '" << temp->name << "' again: line " << root->line_num << endl;
+							}
+							break;
+						default:
+							break;
+					}
+					temp = temp->next;
+				}
+				break;
+			}
+			case ASSIGN:
+			{
+				expression_type_checking(root->tree.root->left ,  root->line_num);
+				expression_type_checking(root->tree.root->right , root->line_num);
+				break;
+			}
+			case READ_STMT:
+			case WRITE_STMT:
+				expression_type_checking(root->tree.root , root->line_num);
+				break;
+			case CONDT:
+			{
+				switch (root->tree.condt_stmt_tree->type)
+				{
+					case IF_CONDT:
+						expression_type_checking(root->tree.condt_stmt_tree->condition , root->line_num) ;
+						semantic_error_checking(root->tree.condt_stmt_tree->stmts1);
+						break;
+					case IF_ELSE:
+						expression_type_checking(root->tree.condt_stmt_tree->condition , root->line_num) ;
+						semantic_error_checking(root->tree.condt_stmt_tree->stmts1);
+						semantic_error_checking(root->tree.condt_stmt_tree->stmts2);
+						break;
+					case WHILE_CONDT:
+						expression_type_checking(root->tree.condt_stmt_tree->condition , root->line_num) ;
+						semantic_error_checking(root->tree.condt_stmt_tree->stmts1);
+						break;
+					default:
+						break;
+				}
+				break;
+			}
+			case END_DECL:
+			case RETURN_STMT:
+			case UNUSED_STMT:
+				break;
+			case FUNC_DEF:
+				semantic_error_checking(root->tree.main_func_def_tree->stmt_block) ;
+				expression_type_checking(root->tree.main_func_def_tree->return_stmt->tree.root , root->tree.main_func_def_tree->return_stmt->line_num) ;
+
+				if ((root->tree.main_func_def_tree->return_stmt->tree.root->type == INTEGER && root->tree.main_func_def_tree->ret_type == DECL_BOOL) || 
+					(root->tree.main_func_def_tree->return_stmt->tree.root->type == BOOL    && root->tree.main_func_def_tree->ret_type == DECL_INT)) 
+				{
+					error_check_var = 1;
+					cerr << "Unmatched return type for function main: line" << root->line_num << endl;
+				}
+				break;
+			default:
+				break;
+		}
+		semantic_error_checking(root->next);
 	}
 	else
 	{

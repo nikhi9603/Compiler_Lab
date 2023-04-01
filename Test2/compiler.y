@@ -23,7 +23,7 @@
 #include<vector>
 using namespace std;
 #include "syntax_tree.h"
-	// #include "sym_table.h"
+#include "sym_table.h"
 
 	// void yyerror( char* );
 int main(int argc, char *argv[]);
@@ -32,6 +32,7 @@ void yyerror(char const  *s);
 void warning(char const *s, char const *t);
 int yylex();
 int lineno = 1 ;
+int error_check_var = 0;
 	// int i;	
 %}
 
@@ -93,16 +94,24 @@ int lineno = 1 ;
 
 Prog	:	Gdecl_sec MainBlock			
 			{ 
-			  struct stmt_list* temp = $1 ;
-			  while(temp->type != END_DECL)
-			  {
-				temp = temp->next;
-			  }
-			  temp -> next = $2;
-			  $$ = $1 ;
-			   
-			   ast_printing($$ , 0);
+			  	struct stmt_list* temp = $1 ;
+			  	while(temp->type != END_DECL)
+			  	{
+					temp = temp->next;
+			  	}
+			  	temp -> next = $2;
+			  	$$ = $1 ;
 
+				// AST
+			  	ast_printing($$ , 0);
+
+				// SEMANTIC ERROR CHECKING
+				cout << endl;
+				semantic_error_checking($$);
+				if(error_check_var == 1)
+				{
+					exit(0);
+				}
 			}
 	;
 	

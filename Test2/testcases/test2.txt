@@ -9,8 +9,8 @@ begin
 	while temp < 5 do
 	       a[temp]=temp+2;	
 	       b[temp]=temp+5;
-               c[temp]= a[temp]+b[temp];
-		temp = temp + 1;
+               c[6]= a[temp]+b[temp];
+		A = temp + 1;
 	endwhile;
          temp=3;
          read ( temp ) ;
@@ -18,7 +18,7 @@ begin
     then
 		read ( temp[2] ) ;
     else  
-        write ( c[1] ) ;
+        write ( c ) ;
     endif
     return 0 ;
 end
