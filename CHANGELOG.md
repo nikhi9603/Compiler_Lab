@@ -94,5 +94,7 @@ _Directory_ : Assignment3
 <br/>* commit - 10: Symbol table and its operations like lookup,insert,update completed without errors. And also all semantic error checking and printing is done.
 <br/> Syntax errors: Stopping at first syntax error.
 <br/> If no syntax error is present in file , then AST and all semantic errors are printed 
+<br/>* commit - 10: Evaluation of statements and printing of symbol table values is done. (values are not getting updated)
+
 
 

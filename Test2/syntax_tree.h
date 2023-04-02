@@ -37,11 +37,6 @@ struct declstmt_tree
     struct decl_node* node;
 };
 
-// ASSIGN statement - struct expr_node* root
-// root contains variable which is left side of equation
-// right contains expression which will be equated to it
-
-// READ statement - it just needs a var_node to read into.
 
 // WRITE statement - requires expr or strings to print : these can be captured by expr_node pointer
 
@@ -107,3 +102,14 @@ void print_expressions(struct expr_node* root);
 /* SEMANTIC ERROR CHECKING */
 void expression_type_checking(struct expr_node* root , int line_num);
 void semantic_error_checking(struct stmt_list* root);
+
+/* EVALUATION OF SYNTAX TREE */
+int evaluate_expression_tree(struct expr_node* root , int line_num);
+void evaluate_assign_stmt(struct stmt_list* root);
+void evaluate_write_stmt(struct stmt_list* root);
+void evaluate_condt_stmt(struct stmt_list* root);
+
+void evaluate_program(struct stmt_list *root);
+
+/* PRINTING ALL SYMBOL VALUES */
+void print_symbol_values();

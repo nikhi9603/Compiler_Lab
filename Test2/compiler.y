@@ -112,6 +112,10 @@ Prog	:	Gdecl_sec MainBlock
 				{
 					exit(0);
 				}
+
+				// EVALUATION PART
+				evaluate_program($$);
+				print_symbol_values();
 			}
 	;
 	

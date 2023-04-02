@@ -585,7 +585,7 @@ void expression_type_checking(struct expr_node* root , int line_num)
 				{
 					if(root->index->type == INTEGER)
 					{
-						if(root->index->const_val > symbol_table[root->name].size)
+						if(root->index->const_val > symbol_table[root->name].size || root->index->const_val < 0 )
 						{
 							error_check_var = 1;
 							cerr << "ERROR:: Index out of bounds near line " <<  line_num << endl;
@@ -715,3 +715,294 @@ void semantic_error_checking(struct stmt_list* root)
 	}
 }
 
+
+/* Evaluation of expression tree */
+int evaluate_expression_tree(struct expr_node* root , int line_num)
+{
+	int result = 0;
+	if(root != NULL)
+	{
+		switch (root->type)
+		{
+			case OP:
+			{
+				// Evaluate left and right subtrees
+				int left_val  = evaluate_expression_tree(root->left , line_num ) ;
+				int right_val = evaluate_expression_tree(root->right , line_num) ;
+
+				switch (root->op)
+				{
+					case PLUS_OP:
+						result = left_val + right_val ;
+						break;
+					case SUB_OP:
+						result = left_val - right_val ;
+						break;
+					case MUL_OP:
+						result = left_val * right_val ;
+						break;
+					case DIV_OP:
+						if(right_val != 0)
+						{
+							result = left_val % right_val ;
+						}
+						else
+						{
+							cerr << "ERROR:: Division by zero when finding modulo near line " << line_num << endl;
+							exit(0);
+						}
+						break;
+					case REMAINDER_OP:
+						if(right_val != 0)
+						{
+							result = left_val % right_val ;
+						}
+						else
+						{
+							cerr << "ERROR:: Division by zero when finding modulo near line " << line_num << endl;
+							exit(0);
+						}
+						break;
+					case GREATERTHAN_OP:
+						result = left_val > right_val ;
+						break;
+					case LESSTHAN_OP:
+						result = left_val < right_val ;
+						break;
+					case GREATERTHAN_EQUAL_OP:
+						result = (left_val >= right_val) ;
+						break;
+					case LESSTHAN_EQUAL_OP:
+						result = (left_val <= right_val) ;
+						break;
+					case NOTEQUAL_OP:
+						result = (left_val != right_val) ;
+						break;
+					case EQUALEQUAL_OP:
+						result = (left_val == right_val) ;
+						break;
+					default:
+						break;
+				}
+				break;		
+			}
+			case INTEGER:
+				result = root->const_val ;
+				break;
+			case BOOL:
+				result = root->bool_val ;
+				break;
+			case VARIABLE:
+				result = symbol_table[root->name].value;
+				break;
+			case ARRAY_ELEMENT:
+			{
+				int index = evaluate_expression_tree(root->index , line_num);
+				
+				if( index > symbol_table[root->name].size && index < 0)
+				{
+					cerr << "ERROR:: Index out of bounds near line " <<  line_num << endl;
+					exit(0);
+				}
+
+				result = *(symbol_table[root->name].array_elements + index) ;
+				break;
+			}
+			case STRING_VAR:
+				break;
+			default:
+				break;
+		}
+	}
+	return result;
+}
+
+/* Evaluation of Assign statement */
+void evaluate_assign_stmt(struct stmt_list* root)
+{
+	int value = evaluate_expression_tree(root->tree.root->right , root->line_num);
+	if(root->tree.root->left->type == ARRAY_ELEMENT)
+	{
+		int index = evaluate_expression_tree(root->tree.root->left->index , root->line_num);
+		update_symbol_details(root->tree.root->left->name , value ,  index);
+	}	
+	else
+	{
+		update_symbol_details(root->tree.root->left->name , value , 0);
+	}
+}
+
+/* Evaluation of read statement */
+void evaluate_read_stmt(struct stmt_list* root)
+{
+	if(root->tree.root->left->type == ARRAY_ELEMENT)
+	{
+		int index = evaluate_expression_tree(root->tree.root->index , root->line_num);
+		if(symbol_table[root->tree.root->name].sym_val_type == INT_SYM)
+		{
+			int val;
+			fscanf(stdin , "%d" , val);
+			update_symbol_details(root->tree.root->name , val , index);
+		}
+		else
+		{
+			bool val ;
+			int temp;
+			fscanf(stdin , "%d" , temp);
+			val = temp;
+			update_symbol_details(root->tree.root->name , val , index);
+		}
+	}	
+	else
+	{
+		if(symbol_table[root->tree.root->name].sym_val_type == INT_SYM)
+		{
+			int val;
+			fscanf(stdin , "%d" , val);
+			update_symbol_details(root->tree.root->name , val , 0);
+		}
+		else
+		{
+			bool val ;
+			int temp;
+			fscanf(stdin , "%d" , temp);
+			val = temp;
+			update_symbol_details(root->tree.root->name , val , 0);
+		}
+	}
+}
+
+/* Evaluation of write statement */
+void evaluate_write_stmt(struct stmt_list* root)
+{
+	if(root->tree.root->type != STRING_VAR)
+	{
+		int val = evaluate_expression_tree(root->tree.root , root->line_num);
+		fprintf(stdout , "%d" , val);
+	}
+	else
+	{
+		struct expr_node* temp = root->tree.root;
+		while(temp->right != NULL)
+		{
+			fprintf(stdout , "%s" , temp->right);
+			temp = temp->right;
+		}
+	}
+}
+
+/* Evaluation of conditional statement */
+void evaluate_condt_stmt(struct stmt_list* root)
+{
+	switch (root->tree.condt_stmt_tree->type)
+	{
+		case IF_CONDT:
+		{
+			int val = evaluate_expression_tree(root->tree.condt_stmt_tree->condition , root->line_num);
+
+			if(val)
+			{
+				evaluate_program(root->tree.condt_stmt_tree->stmts1);
+			}
+			break;
+		}
+		case IF_ELSE:
+		{
+			int val = evaluate_expression_tree(root->tree.condt_stmt_tree->condition , root->line_num);
+
+			if(val)
+			{
+				evaluate_program(root->tree.condt_stmt_tree->stmts1);
+			}
+			else
+			{
+				evaluate_program(root->tree.condt_stmt_tree->stmts2);
+			}
+			break;
+		}
+		case WHILE_CONDT:
+		{
+			int val = evaluate_expression_tree(root->tree.condt_stmt_tree->condition , root->line_num);
+
+			while(val)
+			{
+				evaluate_condt_stmt(root->tree.condt_stmt_tree->stmts1);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+/* evaluation of List of statements */
+void evaluate_program(struct stmt_list *root)
+{
+	if( root != NULL)
+	{
+		switch (root->type)
+		{
+			case DECL_STMT:
+				break;
+			case ASSIGN:
+				evaluate_assign_stmt(root);
+				break;
+			case READ_STMT:
+				evaluate_read_stmt(root);
+				break;
+			case WRITE_STMT:
+				evaluate_write_stmt(root);
+				break;
+			case CONDT:
+				evaluate_condt_stmt(root);
+				break;
+			case RETURN_STMT:
+				evaluate_expression_tree(root->tree.root , root->line_num);
+				break;			// here only main has return stmt and need not do much regarding that
+			case FUNC_DEF:		//main declaration
+				evaluate_program(root->tree.main_func_def_tree->stmt_block);
+				evaluate_program(root->tree.main_func_def_tree->return_stmt);
+				break;
+			case END_DECL:
+			case UNUSED_STMT:
+				break;
+			default:
+				break;
+		}
+		root = root->next;
+	}
+}
+
+// PRINTING ALL SYMBOL VALUES
+void print_symbol_values()
+{
+	for(auto map_element: symbol_table)
+	{
+		if(map_element.second.type == VAR_SYM)
+		{
+			if(map_element.second.sym_val_type == INT_SYM)
+			{
+				cout << map_element.first << " : " << map_element.second.value << endl;
+			}
+			else
+			{
+				if(map_element.second.value <= 0)
+				{
+					cout << map_element.first << " : false " << endl; 
+				}
+				else
+				{
+					cout << map_element.first << " : true" << endl;
+				}
+			}	 
+		}
+		else
+		{
+			cout << map_element.first << " : array type" << endl;
+			for(int i = 0; i < map_element.second.size ; i++)
+			{
+				cout << map_element.first << "[" << i << "] : " << *(map_element.second.array_elements + i) << endl;
+			}
+		}
+	}
+}
