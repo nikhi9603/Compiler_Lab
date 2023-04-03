@@ -25,10 +25,10 @@ struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , stru
 
     switch (type)
 	{
-		case OP: 		/* Type 0 : operators + , * , / , -  */
+		case OP: 		
 				newNode->op = op;
 				break;
-		case INTEGER:			/* Type 1 : constants */
+		case INTEGER:			
 				newNode->const_val = const_val ;				
 				break;
 		case BOOL:
@@ -379,7 +379,7 @@ void ast_printing(struct stmt_list* root , int mark)
 					cout << "VAR_ARRAY " << root->tree.decl_stmt_tree->node->array_size ;
 				}
 
-				struct decl_node* temp = root->tree.decl_stmt_tree->node ;
+				struct decl_node* temp = root->tree.decl_stmt_tree->node->next ;
 				while(temp != NULL)
 				{
 					if(temp->decl_type == VAR_NODE)
@@ -767,6 +767,7 @@ int evaluate_expression_tree(struct expr_node* root , int line_num)
 						result = left_val > right_val ;
 						break;
 					case LESSTHAN_OP:
+						// cout << "reached < " << endl;
 						result = left_val < right_val ;
 						break;
 					case GREATERTHAN_EQUAL_OP:
@@ -821,6 +822,7 @@ int evaluate_expression_tree(struct expr_node* root , int line_num)
 void evaluate_assign_stmt(struct stmt_list* root)
 {
 	int value = evaluate_expression_tree(root->tree.root->right , root->line_num);
+	// cout << value << endl;
 	if(root->tree.root->left->type == ARRAY_ELEMENT)
 	{
 		int index = evaluate_expression_tree(root->tree.root->left->index , root->line_num);
@@ -841,14 +843,14 @@ void evaluate_read_stmt(struct stmt_list* root)
 		if(symbol_table[root->tree.root->name].sym_val_type == INT_SYM)
 		{
 			int val;
-			fscanf(stdin , "%d" , val);
+			fscanf(stdin , "%d" , &val);
 			update_symbol_details(root->tree.root->name , val , index);
 		}
 		else
 		{
 			bool val ;
 			int temp;
-			fscanf(stdin , "%d" , temp);
+			fscanf(stdin , "%d" , &temp);
 			val = temp;
 			update_symbol_details(root->tree.root->name , val , index);
 		}
@@ -858,14 +860,14 @@ void evaluate_read_stmt(struct stmt_list* root)
 		if(symbol_table[root->tree.root->name].sym_val_type == INT_SYM)
 		{
 			int val;
-			fscanf(stdin , "%d" , val);
+			fscanf(stdin , "%d" , &val);
 			update_symbol_details(root->tree.root->name , val , 0);
 		}
 		else
 		{
 			bool val ;
 			int temp;
-			fscanf(stdin , "%d" , temp);
+			fscanf(stdin , "%d" , &temp);
 			val = temp;
 			update_symbol_details(root->tree.root->name , val , 0);
 		}
@@ -878,16 +880,17 @@ void evaluate_write_stmt(struct stmt_list* root)
 	if(root->tree.root->type != STRING_VAR)
 	{
 		int val = evaluate_expression_tree(root->tree.root , root->line_num);
-		fprintf(stdout , "%d" , val);
+		fprintf(stdout , "%d\n" , val);
 	}
 	else
 	{
 		struct expr_node* temp = root->tree.root;
 		while(temp->right != NULL)
 		{
-			fprintf(stdout , "%s" , temp->right);
+			fprintf(stdout , "%s" , temp->right->name);
 			temp = temp->right;
 		}
+		
 	}
 }
 
@@ -924,9 +927,9 @@ void evaluate_condt_stmt(struct stmt_list* root)
 		{
 			int val = evaluate_expression_tree(root->tree.condt_stmt_tree->condition , root->line_num);
 
-			while(val)
+			while(evaluate_expression_tree(root->tree.condt_stmt_tree->condition , root->line_num))
 			{
-				evaluate_condt_stmt(root->tree.condt_stmt_tree->stmts1);
+				evaluate_program(root->tree.condt_stmt_tree->stmts1);
 			}
 			break;
 		}
@@ -938,33 +941,44 @@ void evaluate_condt_stmt(struct stmt_list* root)
 /* evaluation of List of statements */
 void evaluate_program(struct stmt_list *root)
 {
-	if( root != NULL)
+	// cout << "found" << endl;
+	while( root != NULL)
 	{
 		switch (root->type)
 		{
 			case DECL_STMT:
+				// cout << "reached decl" << endl;
 				break;
 			case ASSIGN:
+				// cout <<  "reached assign" << endl;
 				evaluate_assign_stmt(root);
 				break;
 			case READ_STMT:
+				// cout <<  "reached read" << endl;
 				evaluate_read_stmt(root);
 				break;
 			case WRITE_STMT:
+				// cout <<  "reached write" << endl;
 				evaluate_write_stmt(root);
 				break;
 			case CONDT:
+				// cout <<  "reached condt" << endl;
 				evaluate_condt_stmt(root);
 				break;
 			case RETURN_STMT:
+				// cout <<  "reached return" << endl;
 				evaluate_expression_tree(root->tree.root , root->line_num);
 				break;			// here only main has return stmt and need not do much regarding that
 			case FUNC_DEF:		//main declaration
+				// cout <<  "reached main" << endl;
 				evaluate_program(root->tree.main_func_def_tree->stmt_block);
 				evaluate_program(root->tree.main_func_def_tree->return_stmt);
 				break;
 			case END_DECL:
+				// cout <<  "reached enddecl" << endl;
+				break;
 			case UNUSED_STMT:
+				// cout <<  "reached unused" << endl;
 				break;
 			default:
 				break;

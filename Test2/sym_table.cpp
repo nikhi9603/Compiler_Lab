@@ -58,6 +58,7 @@ define_check insert_symbol(char* name , symbol_type type , define_check check , 
 define_check update_symbol_details(char* name , int val , int index)
 {
     define_check sym_check = symbol_lookup(name).first ;
+    // cout << "updated" << endl;
 
     if ( sym_check != UNDECL )   
     {

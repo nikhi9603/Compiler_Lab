@@ -95,6 +95,7 @@ _Directory_ : Assignment3
 <br/> Syntax errors: Stopping at first syntax error.
 <br/> If no syntax error is present in file , then AST and all semantic errors are printed 
 <br/>* commit - 10: Evaluation of statements and printing of symbol table values is done. (values are not getting updated)
+<br/>* commit - 11: Evaluation is working except for read statements.
 
 
 

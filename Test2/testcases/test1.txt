@@ -14,7 +14,7 @@ begin
 	if temp < 3  then
 		write(c[1]);
         else  
-                write (c[4]);
+                write c[4];
         endif
 end
 }
