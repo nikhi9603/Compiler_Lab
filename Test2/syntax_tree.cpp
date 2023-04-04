@@ -837,7 +837,7 @@ void evaluate_assign_stmt(struct stmt_list* root)
 /* Evaluation of read statement */
 void evaluate_read_stmt(struct stmt_list* root)
 {
-	if(root->tree.root->left->type == ARRAY_ELEMENT)
+	if(root->tree.root->type == ARRAY_ELEMENT)
 	{
 		int index = evaluate_expression_tree(root->tree.root->index , root->line_num);
 		if(symbol_table[root->tree.root->name].sym_val_type == INT_SYM)
@@ -885,9 +885,9 @@ void evaluate_write_stmt(struct stmt_list* root)
 	else
 	{
 		struct expr_node* temp = root->tree.root;
-		while(temp->right != NULL)
+		while(temp != NULL)
 		{
-			fprintf(stdout , "%s" , temp->right->name);
+			fprintf(stdout , "%s " , temp->name);
 			temp = temp->right;
 		}
 		

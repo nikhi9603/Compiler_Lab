@@ -1,0 +1,22 @@
+decl
+integer a,b[5],temp;
+integer c[5];
+enddecl
+integer main(){
+begin 
+    a = 9;
+    temp = 2;
+    c[4]=70;
+    if 2-8<7  then
+		read(a);
+    else  
+        read (c[4]);
+    endif
+    write("The value of variable a is");
+    write(a);
+    while temp < 5 do     
+          temp = temp+1;
+	endwhile;
+return 0;
+end
+}

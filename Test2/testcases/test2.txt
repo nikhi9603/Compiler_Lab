@@ -13,12 +13,12 @@ begin
                c[4]= a[temp]+b[temp];
 		temp = temp + 1;
 	endwhile;
-         temp=3;
+         temp[4]=3;
 	if temp < 3  
     then
 		write ( temp ) ;
     else  
-        write ( c[4] ) ;
+        write ( c ) ;
     endif
     return 0 ;
 end

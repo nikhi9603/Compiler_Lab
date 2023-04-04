@@ -96,6 +96,9 @@ _Directory_ : Assignment3
 <br/> If no syntax error is present in file , then AST and all semantic errors are printed 
 <br/>* commit - 10: Evaluation of statements and printing of symbol table values is done. (values are not getting updated)
 <br/>* commit - 11: Evaluation is working except for read statements.
+<br/>* commit - 12: Changed in format of testcase file passing through the command. Added make tests in makefile and also testcases were updated in 'testcases' folder.
+Eg: (executable) (input_relativ_etestcase_path) i.e ./compiler tetscases/test3.txt
+
 
 
 

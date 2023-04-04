@@ -115,6 +115,10 @@ Prog	:	Gdecl_sec MainBlock
 
 				// EVALUATION PART
 				evaluate_program($$);
+
+				// PRINTING SYMBOL TABLE VALUES
+				cout << "\n\nSymbol Table Values" << endl;
+				cout << "-------------------" << endl;
 				print_symbol_values();
 			}
 	;
@@ -213,10 +217,12 @@ char *progname;	/* for error messages */
 #include <signal.h>
 #include <setjmp.h>
 jmp_buf	begin;
+extern FILE* yyin;
 
 int main(int argc, char *argv[])
 {  
     progname = argv[0];
+	yyin = fopen(argv[1] , "r");
     // setjmp(begin);
     yyparse();
     return 0;
