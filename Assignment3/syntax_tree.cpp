@@ -144,7 +144,7 @@ struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* conditio
 		case IF_ELSE:
 			new_stmt->tree.condt_stmt_tree->condition = condition;
 			new_stmt->tree.condt_stmt_tree->stmts1 = stmt1;
-			new_stmt->tree.condt_stmt_tree->stmts1 = stmt2;
+			new_stmt->tree.condt_stmt_tree->stmts2 = stmt2;
 			break;
 		case WHILE_CONDT:
 			new_stmt->tree.condt_stmt_tree->condition = condition;

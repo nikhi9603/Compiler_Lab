@@ -22,7 +22,7 @@
 #include<vector>
 using namespace std;
 #include "syntax_tree.h"
-	// #include "sym_table.h"
+#include "sym_table.h"
 	// #include "AbsSynTree.h"
 	// #define YYSTYPE double
 int yylex();
@@ -31,6 +31,7 @@ int main(int argc, char *argv[]);
 void yyerror(char const *s);
 void warning(char const *s, char const *t);
 int lineno = 1 ;
+int error_check_var = 0;
 	// int i;	
 %}
 
@@ -67,14 +68,10 @@ int lineno = 1 ;
 
 	/* adding types */
 %type <expr_ptr> expr
-// %type <expr_ptr> func_call 
 %type <expr_ptr> var_expr
 %type <expr_ptr> str_expr
-// %type <expr_ptr> param_list
-// %type <expr_ptr> param_list1
-// %type <expr_ptr> para
 
-// %type <stmt_list_ptr> Prog
+%type <stmt_list_ptr> Prog
 %type <stmt_list_ptr> MainBlock
 
 %type <stmt_list_ptr> statement
@@ -91,15 +88,15 @@ int lineno = 1 ;
 %type <decl_node_ptr> Glist
 %type <decl_node_ptr> Gid
 
-%type <stmt_list_ptr> Ldecl_sec
-%type <stmt_list_ptr> Ldecl_list
-%type <stmt_list_ptr> Ldecl
-%type <numValue> func_ret_type
-%type <decl_node_ptr> Lid_list
-%type <decl_node_ptr> Lid
-%type <numValue> type
-%type <var_name> main
+// %type <stmt_list_ptr> Ldecl_sec
+// %type <stmt_list_ptr> Ldecl_list
+// %type <stmt_list_ptr> Ldecl
+// %type <decl_node_ptr> Lid_list
+// %type <decl_node_ptr> Lid
+// %type <numValue> type
+// %type <var_name> main
 
+%type <numValue> func_ret_type
 %type <stmt_list_ptr> ret_stmt
 
 
@@ -107,6 +104,34 @@ int lineno = 1 ;
 
 Prog	:	Gdecl_sec MainBlock
 	// Gdecl_sec Fdef_sec MainBlock
+	{ 
+		struct stmt_list* temp = $1 ;
+		while(temp->type != END_DECL)
+		{
+			temp = temp->next;
+		}
+		temp -> next = $2;
+		$$ = $1 ;
+
+		// AST
+		ast_printing($$ , 0);
+
+		// SEMANTIC ERROR CHECKING
+		cout << endl;
+		semantic_error_checking($$);
+		if(error_check_var == 1)
+		{
+			exit(0);
+		}
+		
+		// EVALUATION PART
+		evaluate_program($$)
+
+		// PRINTING SYMBOL TABLE VALUES
+		cout << "\n\nSymbol Table Values" << endl;
+		cout << "-------------------" << endl;
+		print_symbol_values();
+	}
 	;
 	
 Gdecl_sec:	DECL Gdecl_list ENDDECL { $$ = $2 ; }
@@ -130,60 +155,60 @@ Glist 	:	Gid					{ $$ = $1; }
 		;
 
 Gid	:	VAR					 { $$ = createDecl_Node(VAR_NODE , $1); }
-		|	Gid '[' NUM ']'	 
-		{
-			if($1->decl_type == VAR_NODE)
-			{
-				$1->decl_type = VAR_ARR_NODE ;
-			}
-			$1->args = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $3); 
-			$$ =$1;
-		}
+		|	VAR '[' NUM ']'	 { $$ = createDecl_Node(VAR_ARR_NODE , $1 , $3); }		
 		;
-		
+
+
 	// doubt in arg_list structure
-// func 	:	VAR '(' arg_list ')' 					{ 					}
-// 	;
+func 	:	VAR '(' arg_list ')' 					{ 					}
+	;
 		
-// arg_list:	
-// 	|	arg_list1
-// 	;
+arg_list:	
+	|	arg_list1
+	;
 	
 // arg_list1:	arg_list1 ';' arg		
 // 	|	arg
 // 	;
+arg_list1:	arg_list1 ',' arg		
+	|	arg
+	;
 	
-// arg 	:	arg_type var_list	
-// 	;
+arg :	arg_type var_list	
+	;
 	
-// arg_type:	T_INT		 {  }
-// 	|	T_BOOL 		 { }
-	// ;
+arg_type:	T_INT		 {  }
+		|	T_BOOL 		 { }
+		;
 
 // var_list:	VAR 		 { }
 // 	|	VAR ',' var_list { 	}
 // 	;
+var_list:	VAR 		 { }
+	|	VAR '[' NUM ']' { 	}
+	;
 	
-// Fdef_sec:	
-// 	|	Fdef_sec Fdef
-// 	;
+Fdef_sec:	
+		|	Fdef_sec Fdef
+		;
 	
-// Fdef	:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	{	 				}
-// 	;
+Fdef:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	{	 				}
+	;
 	
 func_ret_type:	T_INT		{ $$ = 0 ; }
 			 |	T_BOOL		{ $$ = 1 ; }
 			 ;
 		
-// func_name:	VAR		{ 					}
-// 	;
+func_name:	VAR		{ 					}
+		 ;
 	
-// FargList:	arg_list	{ 					}
-// 	;
+FargList:	arg_list	{ 					}
+		;
 
 ret_stmt:	RETURN expr ';'		{ $$ = create_return_stmt($2); $$->line_num = lineno; }
 		;
 		
+
 MainBlock: 	func_ret_type main '('')''{' Ldecl_sec BEG stmt_list ret_stmt END  '}'		
 			{ $$ = create_Main($1 , $2 , $6 , $8 , $9);
 			  $$->line_num = lineno ; }
@@ -222,7 +247,7 @@ statement:	assign_stmt  ';'	{ $$ = $1; }
 		|	read_stmt ';'		{ $$ = $1; }
 		|	write_stmt ';'		{ $$ = $1; }
 		|	cond_stmt 			{ $$ = $1; }
-		// |	func_stmt ';'		{ $$ = $1; }
+		|	func_stmt ';'		{ $$ = $1; }
 	;
 
 read_stmt:	READ '(' var_expr ')' 		{ $$ = create_Stmt(READ_STMT , $3 , NULL);    $$->line_num = lineno ; }
@@ -241,22 +266,33 @@ cond_stmt:	IF expr THEN stmt_list ENDIF 				{ $$ = create_Condt_Stmt(IF_CONDT , 
 	//  |    FOR '(' assign_stmt  ';'  expr ';'  assign_stmt ')' '{' stmt_list '}'     {     }
 	;
 
-// func_stmt:	func_call 		{ 						}
-	// ;
+func_stmt:	func_call 		{ 						}
+	;
 	
 // func_call:	VAR '(' param_list ')'		{ $$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , '\0' , 0 , $1 , NULL); $$->params = $3 -> params; }
 // 	;
+func_call:	VAR '(' param_list ')'		{  }
+	;
 	
 // param_list:				
 // 	|	param_list1						{ $$ = $1 ; }
 // 	;
+param_list:				
+	|	param_list1						{  }
+	;
 	
 // param_list1:	para					{ $$ = $1 ; $1 -> params = NULL; }	
 // 	|	para ',' param_list1			{ $1 -> params = $3 ; $$ = $1  ; }
 // 	;
+param_list1:	para					{}	
+	|	para ',' param_list1			{}
+	;
 
 // para	:	expr						{ $$ = $1 ; }
-	// ;
+// 	;
+para	:	expr						{}
+	;
+
 
 expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $1); }
 	|	'-' NUM							{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , -1*$2); }
@@ -278,7 +314,7 @@ expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $1); }
 	|	LOGICAL_NOT expr				{ $$ = createExpr_Node(OP , NULL , $2 , LOGICAL_NOT_OP); }	
 	|	expr LOGICAL_AND expr			{ $$ = createExpr_Node(OP , $1 , $3 , LOGICAL_AND_OP); }	
 	|	expr LOGICAL_OR expr			{ $$ = createExpr_Node(OP , $1 , $3 , LOGICAL_OR_OP); }	
-	// |	func_call						{ $$ = $1; } 
+	|	func_call						{  } 
 	;
 
 str_expr : VAR           { $$ = createExpr_Node(STRING_VAR , NULL , NULL , PLUS_OP , 0 , true , $1); }
@@ -286,15 +322,7 @@ str_expr : VAR           { $$ = createExpr_Node(STRING_VAR , NULL , NULL , PLUS_
          ;
 
 var_expr:	VAR					{ $$ = createExpr_Node(VARIABLE , NULL , NULL , PLUS_OP , 0 , true , $1); }
-	|	var_expr '[' expr ']'	
-	{ 	
-		if($1 -> type == VARIABLE) 
-		{
-			$1 -> type = ARRAY_ELEMENT ;
-		}
-		$1->params = $3 ;
-		$$ =$1;
-	}
+	|	VAR '[' expr ']'		{ $$ = createExpr_Node(ARRAY_ELEMENT , NULL , NULL , PLUS_OP , 0 , true , $1 , $3); }
 	;
 %%
 
@@ -304,6 +332,7 @@ char *progname;	/* for error messages */
 int main(int argc, char *argv[])
 {  
     progname = argv[0];
+	yyin = fopen(argv[1] , "r");
     yyparse();
     return 0;
 }

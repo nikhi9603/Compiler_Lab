@@ -116,4 +116,20 @@ struct stmt_list* create_return_stmt(struct expr_node *expr);
 struct stmt_list* create_Main(int ret_type , char* fun_name , struct stmt_list *decl_block , struct stmt_list* stmt_block , struct stmt_list* return_stmt);
 
 /* ABSTRACT SYNTAX TREE */
-// struct 
+// void ast_printing(struct stmt_list* root , int mark);
+// void print_expressions(struct expr_node* root);
+
+// /* SEMANTIC ERROR CHECKING */
+// void expression_type_checking(struct expr_node* root , int line_num);
+// void semantic_error_checking(struct stmt_list* root);
+
+// /* EVALUATION OF SYNTAX TREE */
+// int evaluate_expression_tree(struct expr_node* root , int line_num);
+// void evaluate_assign_stmt(struct stmt_list* root);
+// void evaluate_write_stmt(struct stmt_list* root);
+// void evaluate_condt_stmt(struct stmt_list* root);
+
+// void evaluate_program(struct stmt_list *root);
+
+// /* PRINTING ALL SYMBOL VALUES */
+// void print_symbol_values();
