@@ -88,60 +88,88 @@ int error_check_var = 0;
 %type <decl_node_ptr> Glist
 %type <decl_node_ptr> Gid
 
-// %type <stmt_list_ptr> Ldecl_sec
-// %type <stmt_list_ptr> Ldecl_list
-// %type <stmt_list_ptr> Ldecl
-// %type <decl_node_ptr> Lid_list
-// %type <decl_node_ptr> Lid
-// %type <numValue> type
-// %type <var_name> main
+%type <decl_node_ptr> func
+%type <numValue> arg_type
+%type <stmt_list_ptr> arg_list 
+%type <stmt_list_ptr> arg_list1
+%type <stmt_list_ptr> arg
+%type <decl_node_ptr> var_list
+
+%type <stmt_list_ptr> Fdef_sec
+%type <stmt_list_ptr> Fdef
+%type <var_name> func_name
+%type <stmt_list_ptr> Ldecl_sec
+%type <stmt_list_ptr> Ldecl_list
+%type <stmt_list_ptr> Ldecl
+%type <decl_node_ptr> Lid_list
+%type <decl_node_ptr> Lid
+%type <numValue> type
+
+%type <stmt_list_ptr> func_stmt
+%type <expr_ptr> func_call
+%type <expr_ptr> param_list
+%type <expr_ptr> param_list1
+%type <expr_ptr> para
+
+%type <var_name> main
 
 %type <numValue> func_ret_type
 %type <stmt_list_ptr> ret_stmt
 
+%type <stmt_list_ptr> FargList 
 
 %%
 
-Prog	:	Gdecl_sec MainBlock
-	// Gdecl_sec Fdef_sec MainBlock
-	{ 
-		struct stmt_list* temp = $1 ;
-		while(temp->type != END_DECL)
-		{
-			temp = temp->next;
+Prog	:	Gdecl_sec Fdef_sec MainBlock
+		{ 
+			// struct stmt_list* temp = $1 ;
+			// while(temp->type != END_DECL)
+			// {
+			// 	temp = temp->next;
+			// }
+			// temp -> next = $2;
+			// $$ = $1 ;
+
+			// // AST
+			// ast_printing($$ , 0);
+
+			// // SEMANTIC ERROR CHECKING
+			// cout << endl;
+			// semantic_error_checking($$);
+			// if(error_check_var == 1)
+			// {
+			// 	exit(0);
+			// }
+			
+			// // EVALUATION PART
+			// evaluate_program($$)
+
+			// // PRINTING SYMBOL TABLE VALUES
+			// cout << "\n\nSymbol Table Values" << endl;
+			// cout << "-------------------" << endl;
+			// print_symbol_values();
+			cout << "true" << endl;
 		}
-		temp -> next = $2;
-		$$ = $1 ;
-
-		// AST
-		ast_printing($$ , 0);
-
-		// SEMANTIC ERROR CHECKING
-		cout << endl;
-		semantic_error_checking($$);
-		if(error_check_var == 1)
-		{
-			exit(0);
-		}
-		
-		// EVALUATION PART
-		evaluate_program($$)
-
-		// PRINTING SYMBOL TABLE VALUES
-		cout << "\n\nSymbol Table Values" << endl;
-		cout << "-------------------" << endl;
-		print_symbol_values();
-	}
-	;
+		;
 	
-Gdecl_sec:	DECL Gdecl_list ENDDECL { $$ = $2 ; }
-	;
+Gdecl_sec:	DECL Gdecl_list ENDDECL 
+		 { 
+			if( $2->type == END_DECL )
+			{
+				$$ = NULL;
+			}
+			else
+			{
+				$$ = $2 ; 
+			}
+		 }
+		 ;
 	
-Gdecl_list: /*	NULL */			{ $$ = create_Enddecl_Stmt(GLOBAL_SCOPE); }
+Gdecl_list: /*	NULL */			{ $$ = create_Enddecl_Stmt(); }
 		| 	Gdecl Gdecl_list 	{ $1->next = $2; $$ = $1; }
 		;
 	
-Gdecl 	:	ret_type Glist ';'	{ $$ = create_Decl_Stmt(GLOBAL_SCOPE , $1 , $2); $$->line_num = lineno; }
+Gdecl 	:	ret_type Glist ';'	{ $$ = create_Decl_Stmt($1 , $2 , lineno); }
 		;
 	
 ret_type:	T_INT	{ $$ = 0 ;}
@@ -149,9 +177,9 @@ ret_type:	T_INT	{ $$ = 0 ;}
 		;
 	
 Glist 	:	Gid					{ $$ = $1; }
-		// | 	func 
+		| 	func 				{ $$ = $1; }
 		|	Gid ',' Glist 		{ $1->next = $3; $$ = $1 ; }
-		// |	func ',' Glist
+		|	func ',' Glist		{ $1->next = $3; $$ = $1 ; }
 		;
 
 Gid	:	VAR					 { $$ = createDecl_Node(VAR_NODE , $1); }
@@ -160,80 +188,119 @@ Gid	:	VAR					 { $$ = createDecl_Node(VAR_NODE , $1); }
 
 
 	// doubt in arg_list structure
-func 	:	VAR '(' arg_list ')' 					{ 					}
+func 	:	VAR '(' arg_list ')' 	
+		{ if ($3 == NULL)
+		  {
+			 $$ = createDecl_Node(FUNC_NODE , $1 , 0 , NULL);
+		  }
+		  else
+		  {
+			$$ = createDecl_Node(FUNC_NODE , $1 , 0 , $3->tree.decl_stmt_tree);
+		  } 					}
 	;
 		
-arg_list:	
-	|	arg_list1
+arg_list: /* NULL */ 	{ $$ = NULL ; }	
+	|	arg_list1		{ $$ = $1 ; }
 	;
 	
-// arg_list1:	arg_list1 ';' arg		
-// 	|	arg
-// 	;
-arg_list1:	arg_list1 ',' arg		
-	|	arg
+arg_list1:	arg_list1 ';' arg		
+			{ 
+				struct stmt_list* temp = $1;
+
+				while(temp -> next != NULL)
+				{
+					temp = temp -> next;
+				}
+				temp -> next = $3;
+				$$ = $1 ;
+			}	
+			|	arg		{ $$ = $1 ; }
+			;
+	
+arg :	arg_type var_list		{ $$ = create_Decl_Stmt($1 , $2 , lineno); }
 	;
 	
-arg :	arg_type var_list	
-	;
-	
-arg_type:	T_INT		 {  }
-		|	T_BOOL 		 { }
+arg_type:	T_INT		{ $$ = 0; }
+		|	T_BOOL 		{ $$ = 1; }
 		;
 
-// var_list:	VAR 		 { }
-// 	|	VAR ',' var_list { 	}
-// 	;
-var_list:	VAR 		 { }
-	|	VAR '[' NUM ']' { 	}
+var_list:	VAR 		 			{ $$ = createDecl_Node(VAR_NODE , $1);  }
+	|	VAR ',' var_list 			{ struct decl_node* temp = createDecl_Node(VAR_NODE , $1);	temp->next = $3 ; $$ = temp;}
 	;
-	
-Fdef_sec:	
-		|	Fdef_sec Fdef
+
+Fdef_sec: /* NULL */ 			{ $$ = NULL ; }
+		|	Fdef_sec Fdef		
+		{ 
+			struct stmt_list* temp = $1;
+			if(temp == NULL)
+			{
+				$$ = $2; $$->next = NULL;
+			}
+			else
+			{
+				while(temp -> next != NULL)
+				{
+					temp = temp -> next;
+				}
+				temp -> next = $2;
+				$$ = $1 ; 
+			}
+			
+		}
 		;
 	
-Fdef:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	{	 				}
+Fdef:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	
+		{	$$ = create_function( $1 , $2 , $4 , $7 , $9 , $10 , lineno); }
 	;
 	
 func_ret_type:	T_INT		{ $$ = 0 ; }
 			 |	T_BOOL		{ $$ = 1 ; }
 			 ;
 		
-func_name:	VAR		{ 					}
+func_name:	VAR		{ $$ = $1 ; }
 		 ;
 	
-FargList:	arg_list	{ 					}
+FargList:	arg_list	{ $$ = $1 ; }
 		;
 
-ret_stmt:	RETURN expr ';'		{ $$ = create_return_stmt($2); $$->line_num = lineno; }
+ret_stmt:	RETURN expr ';'		{ $$ = create_return_stmt($2 , lineno); }
 		;
 		
 
 MainBlock: 	func_ret_type main '('')''{' Ldecl_sec BEG stmt_list ret_stmt END  '}'		
-			{ $$ = create_Main($1 , $2 , $6 , $8 , $9);
-			  $$->line_num = lineno ; }
+			{ $$ = create_function($1 , $2 , NULL , $6 , $8 , $9 , lineno); }
 		 ;
 	
-main	:	MAIN	{ $$ = $1;}
+main	:	MAIN	{ $$ = $1; }
 		;
 		
-Ldecl_sec:	DECL Ldecl_list ENDDECL		{ $$ = $2 ; }
+Ldecl_sec:	DECL Ldecl_list ENDDECL		
+		 { 
+			if( $2->type == END_DECL )
+			{
+				$$ = NULL;
+			}
+			else
+			{
+				$$ = $2 ; 
+			}
+		 }
 		 ;
 
-Ldecl_list:	/* NULL */				{ $$ = create_Enddecl_Stmt(FUNCTION_SCOPE); }	
+Ldecl_list:	/* NULL */				{ $$ = create_Enddecl_Stmt(); }	
 		  |	Ldecl Ldecl_list		{ $$ = $1; $$->next = $2; }
 		  ;
 
-Ldecl	:	type Lid_list ';'		{ $$ = create_Decl_Stmt(FUNCTION_SCOPE , $1 , $2);  $$ -> line_num = lineno; 	$$->line_num = lineno; }
+Ldecl	:	type Lid_list ';'		{ $$ = create_Decl_Stmt($1 , $2 , lineno); }
 		;
 
 type	:	T_INT		{ $$ = 0 ; }
 		|	T_BOOL		{ $$ = 1 ; }
 	 	;
 
-Lid_list:	Lid					{ $$ = $1; }
-	|	Lid ',' Lid_list		{ $1->next = $3; $$ = $1 ; }
-	;
+Lid_list:	Lid						{ $$ = $1; }
+		|	Lid ',' Lid_list		{ $1->next = $3; $$ = $1 ; }
+		;
 	
 Lid	:	VAR		{ $$ = createDecl_Node(VAR_NODE , $1); }
 	;
@@ -246,53 +313,52 @@ stmt_list:	/* NULL {  } */				{ $$ = create_unused_stmt(); }
 statement:	assign_stmt  ';'	{ $$ = $1; }
 		|	read_stmt ';'		{ $$ = $1; }
 		|	write_stmt ';'		{ $$ = $1; }
-		|	cond_stmt 			{ $$ = $1; }
+		|	cond_stmt  ';'		{ $$ = $1; }
 		|	func_stmt ';'		{ $$ = $1; }
-	;
+		;
+ 
+read_stmt:	READ '(' var_expr ')' 		{ $$ = create_Stmt(READ_STMT , lineno , $3 , NULL) ; }
+		 ;
 
-read_stmt:	READ '(' var_expr ')' 		{ $$ = create_Stmt(READ_STMT , $3 , NULL);    $$->line_num = lineno ; }
-	;
+write_stmt:	WRITE '(' expr ')'		 		 { $$ = create_Stmt(WRITE_STMT , lineno , $3 , NULL); }
+	 	  | WRITE '(''"' str_expr '"'')'     { $$ = create_Stmt(WRITE_STMT , lineno , $4 , NULL); }
+		  ;
 
-write_stmt:	WRITE '(' expr ')'		 	{ $$ = create_Stmt(WRITE_STMT , $3 , NULL);   $$->line_num = lineno ; }
-	 | WRITE '(''"' str_expr '"'')'     { $$ = create_Stmt(WRITE_STMT , $4 , NULL);   $$->line_num = lineno ; }
-	;
+assign_stmt:	var_expr '=' expr 		{ $$ = create_Stmt(ASSIGN ,lineno ,  $1 , $3); }
+	 	   ;
 
-assign_stmt:	var_expr '=' expr 		{ $$ = create_Stmt(ASSIGN , $1 , $3);    $$->line_num = lineno ; }
-	;
-
-cond_stmt:	IF expr THEN stmt_list ENDIF 				{ $$ = create_Condt_Stmt(IF_CONDT , $2 , $4 , NULL);    	$$->line_num = lineno ; }
-	|	IF expr THEN stmt_list ELSE stmt_list ENDIF 	{ $$ = create_Condt_Stmt(IF_ELSE , $2 , $4 , $6);   $$->line_num = lineno ; }
-	|	WHILE expr DO stmt_list ENDWHILE ';'			{ $$ = create_Condt_Stmt(WHILE_CONDT , $2 , $4 , NULL);   $$->line_num = lineno ; }
+cond_stmt:	IF expr THEN stmt_list ENDIF 				{ $$ = create_Condt_Stmt(IF_CONDT , lineno , $2 , $4 , NULL); }
+	|	IF expr THEN stmt_list ELSE stmt_list ENDIF 	{ $$ = create_Condt_Stmt(IF_ELSE , lineno , $2 , $4 , $6); }
+	|	WHILE expr DO stmt_list ENDWHILE 			{ $$ = create_Condt_Stmt(WHILE_CONDT , lineno , $2 , $4 , NULL); }
 	//  |    FOR '(' assign_stmt  ';'  expr ';'  assign_stmt ')' '{' stmt_list '}'     {     }
 	;
 
-func_stmt:	func_call 		{ 						}
-	;
+func_stmt:	func_call 					{ $$ = create_Stmt(FUNC_CALL , lineno , $1 , NULL); }
+		 ;
 	
-// func_call:	VAR '(' param_list ')'		{ $$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , '\0' , 0 , $1 , NULL); $$->params = $3 -> params; }
-// 	;
-func_call:	VAR '(' param_list ')'		{  }
-	;
+func_call:	VAR '(' param_list ')'		
+			{ 
+				if ($3 == NULL)
+				{
+					$$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , PLUS_OP , 0 , true , $1 , NULL); 
+				}
+				else
+				{
+					$$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , PLUS_OP , 0 , true , $1 , $3->params); 
+				}
+			}
+		 ;
 	
-// param_list:				
-// 	|	param_list1						{ $$ = $1 ; }
-// 	;
-param_list:				
-	|	param_list1						{  }
-	;
-	
-// param_list1:	para					{ $$ = $1 ; $1 -> params = NULL; }	
-// 	|	para ',' param_list1			{ $1 -> params = $3 ; $$ = $1  ; }
-// 	;
-param_list1:	para					{}	
-	|	para ',' param_list1			{}
+param_list:	/* NULL */ 					{ $$ = NULL ; }			
+	|	param_list1						{ $$ = $1 ; }
 	;
 
-// para	:	expr						{ $$ = $1 ; }
-// 	;
-para	:	expr						{}
+param_list1:	para					{ $$ = $1 ; $1 -> params = NULL; }	
+	|	para ',' param_list1			{ $1 -> params = $3 ; $$ = $1  ; }
 	;
 
+para	:	expr						{ $$ = $1 ; }
+	;
 
 expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $1); }
 	|	'-' NUM							{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , -1*$2); }
@@ -314,7 +380,7 @@ expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $1); }
 	|	LOGICAL_NOT expr				{ $$ = createExpr_Node(OP , NULL , $2 , LOGICAL_NOT_OP); }	
 	|	expr LOGICAL_AND expr			{ $$ = createExpr_Node(OP , $1 , $3 , LOGICAL_AND_OP); }	
 	|	expr LOGICAL_OR expr			{ $$ = createExpr_Node(OP , $1 , $3 , LOGICAL_OR_OP); }	
-	|	func_call						{  } 
+	|	func_call						{ $$ = $1; } 
 	;
 
 str_expr : VAR           { $$ = createExpr_Node(STRING_VAR , NULL , NULL , PLUS_OP , 0 , true , $1); }
@@ -327,12 +393,42 @@ var_expr:	VAR					{ $$ = createExpr_Node(VARIABLE , NULL , NULL , PLUS_OP , 0 , 
 %%
 
 
+// #include <ctype.h>
+// char *progname;	/* for error messages */
+// int main(int argc, char *argv[])
+// {  
+//     progname = argv[0];
+// 	yyin = fopen(argv[1] , "r");
+//     yyparse();
+//     return 0;
+// }
+
+// void yyerror(char const *s)
+// {
+//     warning(s, (char *)0);
+// }
+
+// void warning(char const *s, char const *t)	/* print warning message */
+// {
+//     fprintf(stderr, "%s: %s", progname, s);
+//     if (t)
+//         fprintf(stderr, " %s", t);
+//     fprintf(stderr, " near line %d\n", lineno);
+// }
+
+#include <stdio.h>
 #include <ctype.h>
 char *progname;	/* for error messages */
+#include <signal.h>
+#include <setjmp.h>
+jmp_buf	begin;
+extern FILE* yyin;
+
 int main(int argc, char *argv[])
 {  
     progname = argv[0];
 	yyin = fopen(argv[1] , "r");
+    // setjmp(begin);
     yyparse();
     return 0;
 }
@@ -342,10 +438,16 @@ void yyerror(char const *s)
     warning(s, (char *)0);
 }
 
+// void execerror(char *s, char *t)	
+// {
+// 	warning(s, t);
+//     // longjmp(begin, 0);
+// }
+
 void warning(char const *s, char const *t)	/* print warning message */
 {
     fprintf(stderr, "%s: %s", progname, s);
-    if (t)
+    if (t && *t)
         fprintf(stderr, " %s", t);
     fprintf(stderr, " near line %d\n", lineno);
 }

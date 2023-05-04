@@ -38,6 +38,7 @@ struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , stru
 				break;
         case ARRAY_ELEMENT:
                 newNode->name = var_name;
+				newNode->params = params;
 				break;	
         case FUNCTION_CALL:
                 newNode->name = var_name;
@@ -50,14 +51,14 @@ struct expr_node* createExpr_Node(expr_type type , struct expr_node* left , stru
                 break;
 		default:
 				/* raise error */
-				cerr << "Invalid expression" << endl ;
+				cerr << "Error: Invalid expression" << endl ;
 				exit(0);
 	}
 	return newNode;
 }
 
 /* DECLARATION TREE NODE */
-struct decl_node* createDecl_Node(decl_node_type type , char* name)
+struct decl_node* createDecl_Node(decl_node_type type , char* name , int size , struct declstmt_tree *args)
 {
     struct decl_node* newNode;
 
@@ -71,13 +72,23 @@ struct decl_node* createDecl_Node(decl_node_type type , char* name)
 	}	
 	newNode->decl_type = type;
 	newNode->name = name;
+
+	if(type == VAR_ARR_NODE)
+    {
+        newNode->array_size = size;   
+    }
+	else if (type == FUNC_NODE)
+	{
+		newNode->args = args;
+	}	
+
 	newNode->next = NULL;
 	return newNode;
 }
 
 
 /* CREATING STATEMENT TREE OF TYPE USING expr_node as tree in structure stmt_list */
-struct stmt_list* create_Stmt(stmt_type type , struct expr_node* expr1 , struct expr_node* expr2)
+struct stmt_list* create_Stmt(stmt_type type , int line_num , struct expr_node* expr1 , struct expr_node* expr2)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
 
@@ -88,6 +99,7 @@ struct stmt_list* create_Stmt(stmt_type type , struct expr_node* expr1 , struct 
 	}
 
 	new_stmt->type = type;
+	new_stmt->line_num = line_num;
 	new_stmt->next = NULL;
 
 	switch (type)
@@ -111,7 +123,7 @@ struct stmt_list* create_Stmt(stmt_type type , struct expr_node* expr1 , struct 
 			new_stmt->tree.root = expr1;
 			break;
 		default:
-			cerr << "Invalid statement" << endl;
+			cerr << "Invalid statement" << line_num<< endl;
 			exit(0);
 	}
 	return new_stmt;
@@ -119,7 +131,7 @@ struct stmt_list* create_Stmt(stmt_type type , struct expr_node* expr1 , struct 
 
 
 /* creating CONDITIONAL STATEMENT tree */
-struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* condition , struct stmt_list* stmt1 , struct stmt_list* stmt2)
+struct stmt_list* create_Condt_Stmt(condt_type type , int line_num , struct expr_node* condition , struct stmt_list* stmt1 , struct stmt_list* stmt2)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
 	struct condtStmt_tree* condt_tree = (struct condtStmt_tree*)malloc(sizeof(struct condtStmt_tree)) ;
@@ -133,6 +145,7 @@ struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* conditio
 	new_stmt->type = CONDT ;
 	new_stmt->tree.condt_stmt_tree = condt_tree ;
 	new_stmt->tree.condt_stmt_tree->type = type ;
+	new_stmt->line_num = line_num;
 	new_stmt->next = NULL;
 
 	switch (type)
@@ -159,27 +172,24 @@ struct stmt_list* create_Condt_Stmt(condt_type type , struct expr_node* conditio
 
 
 /* creating an extra node to specify that declaration block is ended */
-struct stmt_list* create_Enddecl_Stmt(decl_scope scope)
+struct stmt_list* create_Enddecl_Stmt()
 {
-	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
-	struct declstmt_tree* decl_tree = (struct declstmt_tree*)malloc(sizeof(struct declstmt_tree));
 
-	if(new_stmt == NULL || decl_tree == NULL)
+	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
+
+	if(new_stmt == NULL)
 	{
 		cerr << "Memory not available to allocate new stmt node\n" << endl ;
 		exit(0);
 	}
-	new_stmt->type = DECL_STMT ;
-	new_stmt->tree.decl_stmt_tree = decl_tree;
-	new_stmt->tree.decl_stmt_tree->scope = GLOBAL_SCOPE ;
-	new_stmt->tree.decl_stmt_tree->node = NULL;
+	new_stmt->type = END_DECL ;
 	new_stmt->next = NULL;
 	return new_stmt;
 }
 
 
 /* DECLARATION  STATEMENT */
-struct stmt_list* create_Decl_Stmt(decl_scope scope , int ret_type , struct decl_node* node)
+struct stmt_list* create_Decl_Stmt(int ret_type , struct decl_node* node , int line_num)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
 	struct declstmt_tree* decl_tree = (struct declstmt_tree*)malloc(sizeof(struct declstmt_tree));
@@ -192,8 +202,9 @@ struct stmt_list* create_Decl_Stmt(decl_scope scope , int ret_type , struct decl
 
 	new_stmt->type = DECL_STMT;
 	new_stmt->tree.decl_stmt_tree = decl_tree;
-	new_stmt->tree.decl_stmt_tree->scope = scope ;
+	// new_stmt->tree.decl_stmt_tree->scope = scope ;
 	new_stmt->tree.decl_stmt_tree->node = node;
+	new_stmt->line_num = line_num;
 
 	if(ret_type == 1)
 	{
@@ -209,7 +220,7 @@ struct stmt_list* create_Decl_Stmt(decl_scope scope , int ret_type , struct decl
 
 
 /* creating MAIN function */
-struct stmt_list* create_Main(int ret_type , char* fun_name , struct stmt_list *decl_block , struct stmt_list* stmt_block , struct stmt_list* return_stmt)
+struct stmt_list* create_function(int ret_type , char* fun_name , struct stmt_list* argList , struct stmt_list *decl_block , struct stmt_list* stmt_block , struct stmt_list* return_stmt , int line_num)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;
 	struct func_definition_tree* func_tree = (struct func_definition_tree*)malloc(sizeof(struct func_definition_tree)) ;
@@ -222,11 +233,12 @@ struct stmt_list* create_Main(int ret_type , char* fun_name , struct stmt_list *
 
 	new_stmt->type = FUNC_DEF ;
 	new_stmt->tree.func_def_tree = func_tree ;
-	new_stmt->tree.func_def_tree->argList = NULL;
+	new_stmt->tree.func_def_tree->argList = argList;
 	new_stmt->tree.func_def_tree->func_name = fun_name ;
 	new_stmt->tree.func_def_tree->decl_block = decl_block ;
 	new_stmt->tree.func_def_tree->stmt_block = stmt_block ;
 	new_stmt->tree.func_def_tree->return_stmt = return_stmt ;
+	new_stmt->line_num = line_num;
 	new_stmt->next = NULL;
 
 	if(ret_type == 1)
@@ -258,7 +270,7 @@ struct stmt_list* create_unused_stmt()
 }
 
 /* creating RETURN statement */
-struct stmt_list* create_return_stmt(struct expr_node *expr)
+struct stmt_list* create_return_stmt(struct expr_node *expr , int line_num)
 {
 	struct stmt_list* new_stmt = (struct stmt_list*)malloc(sizeof(struct stmt_list)) ;	
 
@@ -271,6 +283,7 @@ struct stmt_list* create_return_stmt(struct expr_node *expr)
 	new_stmt->type = RETURN_STMT;
 	new_stmt->next = NULL ;
 	new_stmt->tree.root = expr;
+	new_stmt->line_num = line_num;
 
 	return new_stmt;
 }
