@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <fstream>
 using namespace std;
 
 // EXPRESSION NODE
@@ -124,9 +125,14 @@ struct stmt_list* create_function(int ret_type , char* fun_name , struct stmt_li
 void ast_printing(struct stmt_list* root);
 void print_expressions(struct expr_node* root);
 
-// /* SEMANTIC ERROR CHECKING */
+/* SEMANTIC ERROR CHECKING */
 void expression_type_checking(struct expr_node* root , int line_num , char* func_name);
 void semantic_error_checking(struct stmt_list* root , char* func_name);
+
+/* PRINTING EQUIVALENT C CODE */
+void generate_equivalent_c_expressions(struct expr_node* root , ofstream& out_stream);
+void generate_equivalent_c_statements(struct stmt_list* root , ofstream& out_stream , int isFuncArgs);
+void generate_equivalent_c_code(struct stmt_list* start , char* output_file_name);
 
 // /* EVALUATION OF SYNTAX TREE */
 // int evaluate_expression_tree(struct expr_node* root , int line_num);

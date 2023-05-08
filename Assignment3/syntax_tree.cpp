@@ -3,6 +3,7 @@
 #include "sym_table.h"
 using namespace std;
 #include <cstring>
+#include <fstream>
 
 extern int error_check_var ;
 
@@ -1030,4 +1031,361 @@ void semantic_error_checking(struct stmt_list* root , char* func_name)
 	{
 		return ;
 	}
+}
+
+
+
+
+// GENERATION OF EQUIVALENT C CODE
+void generate_equivalent_c_expressions(struct expr_node* root , ofstream& out_stream)
+{
+	if(root != NULL)
+	{	
+		// LEFT TREE
+		generate_equivalent_c_expressions(root->left , out_stream);
+		switch (root->type)
+		{
+			case OP:
+			{
+				switch (root->op)
+				{
+					case PLUS_OP :
+						out_stream << "+ " ;
+						break;
+					case SUB_OP : 
+						out_stream << "- " ;
+						break;
+					case MUL_OP : 
+						out_stream << "* " ;
+						break;
+					case DIV_OP : 
+						out_stream << "/ " ;
+						break;
+					case REMAINDER_OP : 
+						out_stream << "% " ;
+						break;
+					case GREATERTHAN_OP : 
+						out_stream << "> " ;
+						break;
+					case LESSTHAN_OP : 
+						out_stream << "< " ;
+						break;
+					case GREATERTHAN_EQUAL_OP : 
+						out_stream << ">= " ;
+						break;
+					case LESSTHAN_EQUAL_OP : 
+						out_stream << "<= " ;
+						break;
+					case NOTEQUAL_OP : 
+						out_stream << "!= " ;
+						break;
+					case EQUALEQUAL_OP : 
+						out_stream << "== " ;
+						break;
+					case LOGICAL_NOT_OP : 
+						out_stream << "! " ;
+						break;
+					case LOGICAL_AND_OP : 
+						out_stream << "&& " ;
+						break;
+					case LOGICAL_OR_OP : 
+						out_stream << "|| " ;
+						break;
+					default:
+						break;
+				}
+				break;
+			}
+			case INTEGER:
+				out_stream << root->const_val ;
+				break;
+			case BOOL:
+				out_stream << root->bool_val ;
+				break;
+			case VARIABLE:
+				out_stream << root->name ;
+				break;
+			case ARRAY_ELEMENT:
+				out_stream << root->name << "[ " ;
+				generate_equivalent_c_expressions(root->params , out_stream);
+				out_stream << " ]" ;
+				break;
+			case STRING_VAR:
+				out_stream << root->name << " "  ;
+				break;
+			case FUNCTION_CALL:
+			{
+				out_stream << root->name << "( ";
+				struct expr_node* temp = root->params;
+
+				if(temp != NULL)
+				{
+					generate_equivalent_c_expressions(temp , out_stream);
+					temp = temp->params ;
+				}				
+
+				while(temp != NULL)
+				{
+					out_stream << " , " ;
+					generate_equivalent_c_expressions(temp , out_stream);
+					temp = temp->params;
+				}
+				out_stream << " ) " ;
+				break;
+			}
+			default:
+				break;
+		}
+
+		// RIGHT TREE
+		generate_equivalent_c_expressions(root->right , out_stream);
+	}
+}
+
+void generate_equivalent_c_statements(struct stmt_list* root , ofstream& out_stream , int isFuncArgs)	//isFuncDeclaration = 0 => false , 1 => true
+{
+	if( root != NULL )
+	{
+		switch(root->type)
+		{
+			case DECL_STMT:
+			{
+				// if(mark == 0)
+				// {
+				// 	cout << "DECL" << endl;
+				// 	mark = 1 ;
+				// }
+
+				if(root->tree.decl_stmt_tree->ret_type == 0)
+				{
+					out_stream << "int ";
+				}
+				else
+				{
+					out_stream << "bool " ;
+				}
+				
+				if(root->tree.decl_stmt_tree->node->decl_type == VAR_NODE)
+				{
+					out_stream << root->tree.decl_stmt_tree->node->name ;
+				}
+				else if (root->tree.decl_stmt_tree->node->decl_type == VAR_ARR_NODE)
+				{
+					out_stream << root->tree.decl_stmt_tree->node->name << "[ " << root->tree.decl_stmt_tree->node->array_size  << " ] ";
+				}
+				else if( root->tree.decl_stmt_tree->node->decl_type == FUNC_NODE)
+				{
+					out_stream << root->tree.decl_stmt_tree->node->name << " ( " ;
+					if(root->tree.decl_stmt_tree->node->args != NULL)
+					{
+						generate_equivalent_c_statements(root->tree.decl_stmt_tree->node->args , out_stream , 1) ;
+					}
+					out_stream << " );\n";
+					break;
+				}
+
+				if (isFuncArgs == 0)
+				{
+					struct decl_node* temp = root->tree.decl_stmt_tree->node->next ;
+					while(temp != NULL)
+					{
+						if(temp->decl_type == VAR_NODE)
+						{
+							out_stream << " , " << temp->name ;
+						}
+						else
+						{
+							out_stream << " , " << temp->name << "[ " << temp->array_size  << " ] " ;
+						}
+
+						temp = temp -> next;
+					}
+					out_stream << " ;\n";
+				}
+				else
+				{
+					int temp_ret_type = root->tree.decl_stmt_tree->ret_type ;
+					struct decl_node* temp ;
+					struct stmt_list *temp_stmt = root;
+					int i = 0;
+
+					while(temp_stmt != NULL)
+					{
+						if(i == 0)
+						{
+							temp = temp_stmt->tree.decl_stmt_tree->node->next ;
+						}
+						else
+						{
+							temp = temp_stmt->tree.decl_stmt_tree->node ;
+						}
+
+						while(temp != NULL)
+						{
+
+							out_stream << " , " ;
+							if(temp_ret_type == 0)
+							{
+								out_stream << "int ";
+							}
+							else
+							{
+								out_stream << "bool " ;
+							}
+
+							if(temp->decl_type == VAR_NODE)
+							{
+								out_stream << temp->name ;
+							}
+							temp = temp -> next;
+							i++ ;
+						}
+						temp_stmt = temp_stmt -> next;
+					}
+					return;
+				}
+				break;
+			}
+			case ASSIGN:
+				generate_equivalent_c_expressions(root->tree.root->left , out_stream);
+				out_stream << " = " ;
+				generate_equivalent_c_expressions(root->tree.root->right , out_stream);
+				out_stream << ";\n";
+				break;
+			case READ_STMT:
+				out_stream << "scanf(\"%d\" , &" ;
+				if(root->tree.root->type == VARIABLE)
+				{
+					out_stream << root->tree.root->name ;
+				}
+				else
+				{
+					out_stream << root->tree.root->name << "[ " ;
+					generate_equivalent_c_expressions(root->tree.root->params , out_stream) ;
+					out_stream << " ] " ;
+				}	
+				out_stream << ") ; \n";
+				break;
+			case WRITE_STMT:
+				if(root->tree.root->type == STRING_VAR)
+				{
+					out_stream << "printf( \"" ;	
+				}
+				else
+				{
+					out_stream << "printf(\"%d\\n\" ," ;
+				}
+				generate_equivalent_c_expressions(root->tree.root , out_stream) ;
+
+				if(root->tree.root->type == STRING_VAR)
+				{
+					out_stream << " \" ) ; \n" ;	
+				}
+				else
+				{
+					out_stream << " ) ;\n";
+				}
+				break;
+			case CONDT:
+			{
+				switch (root->tree.condt_stmt_tree->type)
+				{
+				case IF_CONDT:
+					out_stream << "if ( " ;
+					generate_equivalent_c_expressions(root->tree.condt_stmt_tree->condition , out_stream) ;
+					out_stream << " )\n {\n" << endl ;
+					generate_equivalent_c_statements(root->tree.condt_stmt_tree->stmts1 , out_stream , 0);
+					out_stream  << " }\n"  << endl;
+					break;
+				case IF_ELSE:
+					out_stream << "if ( " ;
+					generate_equivalent_c_expressions(root->tree.condt_stmt_tree->condition , out_stream) ;
+					out_stream << " ) \n { \n" << endl ; 
+					generate_equivalent_c_statements(root->tree.condt_stmt_tree->stmts1 , out_stream , 0);
+					out_stream << " } \n else \n { \n" << endl;
+					generate_equivalent_c_statements(root->tree.condt_stmt_tree->stmts2 , out_stream , 0);
+					out_stream << "} \n"  << endl;
+					break;
+				case WHILE_CONDT:
+					out_stream << "while ( " ;
+					generate_equivalent_c_expressions(root->tree.condt_stmt_tree->condition , out_stream) ;
+					out_stream << " ) \n { \n" << endl ;
+					generate_equivalent_c_statements(root->tree.condt_stmt_tree->stmts1 , out_stream , 0);
+					out_stream << " } \n"  << endl;
+					break;
+				default:
+					break;
+				}
+				break;
+			}
+			case RETURN_STMT:
+				out_stream << "return " ;
+				generate_equivalent_c_expressions(root->tree.root , out_stream);
+				out_stream << " ; \n";
+				break;
+			case END_DECL:
+				// if(root->line_num == 0)
+				// {
+				// 	out_stream << "ENDDECL" << endl;
+				// 	out_stream << endl;
+				// }
+				// else
+				// {
+				// 	out_stream << "ENDDECL" << endl;
+				// }
+				break;
+			case FUNC_DEF:
+				out_stream << "\n";
+				if(root->tree.func_def_tree->ret_type == 0)
+				{
+					out_stream << "int ";
+				}
+				else
+				{
+					out_stream << "bool " ;
+				}
+				
+				out_stream << root->tree.func_def_tree->func_name << " ( " ;
+				
+				if(root->tree.func_def_tree->argList != NULL)
+				{
+					generate_equivalent_c_statements(root->tree.func_def_tree->argList , out_stream , 1);
+				}
+				out_stream << " ) \n { \n" ;
+
+				generate_equivalent_c_statements(root->tree.func_def_tree->decl_block , out_stream , 0);
+
+				out_stream << "\n" ;
+				generate_equivalent_c_statements(root->tree.func_def_tree->stmt_block , out_stream , 0) ;
+				generate_equivalent_c_statements(root->tree.func_def_tree->return_stmt , out_stream , 0) ;
+				out_stream << "\n }\n";
+
+				break;
+			case FUNC_CALL:
+				generate_equivalent_c_expressions(root->tree.root , out_stream);
+				out_stream << "; \n";
+				break;
+			case UNUSED_STMT:
+				return;
+			case DECL_START:
+				// out_stream << "DECL" << endl;
+				break;
+			default:
+				break;
+		}
+		// cout << root->type << endl;
+		generate_equivalent_c_statements(root->next , out_stream , 0);
+	}
+	else
+	{
+		return ;
+	}
+}
+
+void generate_equivalent_c_code(struct stmt_list* start , char* output_file_name)
+{
+	ofstream out_stream(output_file_name);
+
+	out_stream << "#include <stdio.h>\n" << "#include <stdbool.h>\n" << "\n\n";
+	generate_equivalent_c_statements(start , out_stream , 0);
 }

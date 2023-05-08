@@ -32,6 +32,8 @@ void yyerror(char const *s);
 void warning(char const *s, char const *t);
 int lineno = 1 ;
 int error_check_var = 0;
+	struct stmt_list* start ;
+int mark = 0;
 	// int i;	
 %}
 
@@ -162,6 +164,7 @@ Prog	:	Gdecl_sec Fdef_sec MainBlock
 				
 				temp -> next = $3;
 			}
+			start = $$;
 
 			// AST
 			ast_printing($$);
@@ -170,12 +173,17 @@ Prog	:	Gdecl_sec Fdef_sec MainBlock
 			cout << endl;
 			cout << endl;
 			semantic_error_checking($$ , "global");
+			mark = 1;
 
 			if(error_check_var == 1)
 			{
 				exit(0);
 			}
 			
+			// EQUIVALENT C CODE
+
+			
+
 			// // EVALUATION PART
 			// evaluate_program($$)
 
@@ -468,7 +476,17 @@ int main(int argc, char *argv[])
     progname = argv[0];
 	yyin = fopen(argv[1] , "r");
     // setjmp(begin);
-    yyparse();
+	cout << endl;
+    yyparse();		
+	if(error_check_var != 1 && mark == 1)
+	{	
+		generate_equivalent_c_code(start, argv[2]);
+	}
+	else
+	{
+		int r = remove(argv[2]);
+	}
+
     return 0;
 }
 
