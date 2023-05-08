@@ -122,24 +122,59 @@ int error_check_var = 0;
 
 Prog	:	Gdecl_sec Fdef_sec MainBlock
 		{ 
-			// struct stmt_list* temp = $1 ;
-			// while(temp->type != END_DECL)
-			// {
-			// 	temp = temp->next;
-			// }
-			// temp -> next = $2;
-			// $$ = $1 ;
+			if ( $1 != NULL && $2 != NULL )
+			{
+				struct stmt_list* temp = $1 ;
 
-			// // AST
-			// ast_printing($$ , 0);
+				while(temp->type != END_DECL)
+				{
+					temp = temp->next;
+				}
+				temp -> next = $2;
+				$$ = $1 ;
 
-			// // SEMANTIC ERROR CHECKING
-			// cout << endl;
-			// semantic_error_checking($$);
-			// if(error_check_var == 1)
-			// {
-			// 	exit(0);
-			// }
+				temp = $2;
+				while(temp->next != NULL)
+				{
+					temp = temp->next;
+				}
+				temp -> next = $3;
+			}
+			else if( $1 == 	NULL && $2 == NULL )
+			{
+				$$ = $3 ;
+			}
+			else if ( $1 == NULL )
+			{
+				cerr << "ERROR: Undeclared functions in global declaration block" << endl;
+				exit(0);
+			}
+			else if( $2 == 	NULL)
+			{
+				$$ = $1 ;
+
+				struct stmt_list* temp = $1 ;
+
+				while(temp->type != END_DECL)
+				{
+					temp = temp->next;
+				}
+				
+				temp -> next = $3;
+			}
+
+			// AST
+			ast_printing($$);
+
+			// SEMANTIC ERROR CHECKING
+			cout << endl;
+			cout << endl;
+			semantic_error_checking($$ , "global");
+
+			if(error_check_var == 1)
+			{
+				exit(0);
+			}
 			
 			// // EVALUATION PART
 			// evaluate_program($$)
@@ -148,7 +183,6 @@ Prog	:	Gdecl_sec Fdef_sec MainBlock
 			// cout << "\n\nSymbol Table Values" << endl;
 			// cout << "-------------------" << endl;
 			// print_symbol_values();
-			cout << "true" << endl;
 		}
 		;
 	
@@ -160,12 +194,13 @@ Gdecl_sec:	DECL Gdecl_list ENDDECL
 			}
 			else
 			{
-				$$ = $2 ; 
+				$$ = create_decl_start_stmt();
+				$$ -> next = $2 ; 
 			}
 		 }
 		 ;
 	
-Gdecl_list: /*	NULL */			{ $$ = create_Enddecl_Stmt(); }
+Gdecl_list: /*	NULL */			{ $$ = create_Enddecl_Stmt(0); }
 		| 	Gdecl Gdecl_list 	{ $1->next = $2; $$ = $1; }
 		;
 	
@@ -195,8 +230,9 @@ func 	:	VAR '(' arg_list ')'
 		  }
 		  else
 		  {
-			$$ = createDecl_Node(FUNC_NODE , $1 , 0 , $3->tree.decl_stmt_tree);
-		  } 					}
+			$$ = createDecl_Node(FUNC_NODE , $1 , 0 , $3);
+		  } 					
+		}
 	;
 		
 arg_list: /* NULL */ 	{ $$ = NULL ; }	
@@ -250,7 +286,7 @@ Fdef_sec: /* NULL */ 			{ $$ = NULL ; }
 		;
 	
 Fdef:	func_ret_type func_name '(' FargList ')' '{' Ldecl_sec BEG stmt_list ret_stmt END '}'	
-		{	$$ = create_function( $1 , $2 , $4 , $7 , $9 , $10 , lineno); }
+		{	$$ = create_function( $1 , $2 , $4 , $7 , $9 , $10 , $4->line_num); }
 	;
 	
 func_ret_type:	T_INT		{ $$ = 0 ; }
@@ -260,7 +296,7 @@ func_ret_type:	T_INT		{ $$ = 0 ; }
 func_name:	VAR		{ $$ = $1 ; }
 		 ;
 	
-FargList:	arg_list	{ $$ = $1 ; }
+FargList:	arg_list	{ $$ = $1 ; $$->line_num = lineno; }
 		;
 
 ret_stmt:	RETURN expr ';'		{ $$ = create_return_stmt($2 , lineno); }
@@ -282,12 +318,13 @@ Ldecl_sec:	DECL Ldecl_list ENDDECL
 			}
 			else
 			{
-				$$ = $2 ; 
+				$$ = create_decl_start_stmt();
+				$$ -> next = $2 ; 
 			}
 		 }
 		 ;
 
-Ldecl_list:	/* NULL */				{ $$ = create_Enddecl_Stmt(); }	
+Ldecl_list:	/* NULL */				{ $$ = create_Enddecl_Stmt(1); }	
 		  |	Ldecl Ldecl_list		{ $$ = $1; $$->next = $2; }
 		  ;
 
@@ -327,9 +364,9 @@ write_stmt:	WRITE '(' expr ')'		 		 { $$ = create_Stmt(WRITE_STMT , lineno , $3 
 assign_stmt:	var_expr '=' expr 		{ $$ = create_Stmt(ASSIGN ,lineno ,  $1 , $3); }
 	 	   ;
 
-cond_stmt:	IF expr THEN stmt_list ENDIF 				{ $$ = create_Condt_Stmt(IF_CONDT , lineno , $2 , $4 , NULL); }
-	|	IF expr THEN stmt_list ELSE stmt_list ENDIF 	{ $$ = create_Condt_Stmt(IF_ELSE , lineno , $2 , $4 , $6); }
-	|	WHILE expr DO stmt_list ENDWHILE 			{ $$ = create_Condt_Stmt(WHILE_CONDT , lineno , $2 , $4 , NULL); }
+cond_stmt:	IF expr THEN stmt_list ENDIF 				{ $$ = create_Condt_Stmt(IF_CONDT , $4->line_num , $2 , $4 , NULL); }
+	|	IF expr THEN stmt_list ELSE stmt_list ENDIF 	{ $$ = create_Condt_Stmt(IF_ELSE , $4->line_num , $2 , $4 , $6); }
+	|	WHILE expr DO stmt_list ENDWHILE 			{ $$ = create_Condt_Stmt(WHILE_CONDT , $4->line_num , $2 , $4 , NULL); }
 	//  |    FOR '(' assign_stmt  ';'  expr ';'  assign_stmt ')' '{' stmt_list '}'     {     }
 	;
 
@@ -344,7 +381,7 @@ func_call:	VAR '(' param_list ')'
 				}
 				else
 				{
-					$$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , PLUS_OP , 0 , true , $1 , $3->params); 
+					$$ = createExpr_Node(FUNCTION_CALL , NULL , NULL , PLUS_OP , 0 , true , $1 , $3); 
 				}
 			}
 		 ;
@@ -363,7 +400,7 @@ para	:	expr						{ $$ = $1 ; }
 expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $1); }
 	|	'-' NUM							{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , -1*$2); }
 	|	var_expr						{ $$ = $1; }
-	|	T								{ $$ = createExpr_Node(BOOL , NULL , NULL , PLUS_OP , 0 , true); }
+	|	T								{ $$ = createExpr_Node(BOOL , NULL , NULL , PLUS_OP , 1 , true); }
 	|	F								{ $$ = createExpr_Node(BOOL , NULL , NULL , PLUS_OP , 0 , false); }
 	|	'(' expr ')'					{ $$ = $2; }
 	|	expr '+' expr 					{ $$ = createExpr_Node(OP , $1 , $3 , PLUS_OP); }
@@ -385,6 +422,8 @@ expr	:	NUM 						{ $$ = createExpr_Node(INTEGER , NULL , NULL , PLUS_OP , $1); }
 
 str_expr : VAR           { $$ = createExpr_Node(STRING_VAR , NULL , NULL , PLUS_OP , 0 , true , $1); }
          | VAR str_expr  { $$ = createExpr_Node(STRING_VAR , NULL , $2 , PLUS_OP , 0 , true , $1); }
+		//  | '\n' 			{}	// \n is ignored in compiler.l file itself
+		 | '='			 {}
          ;
 
 var_expr:	VAR					{ $$ = createExpr_Node(VARIABLE , NULL , NULL , PLUS_OP , 0 , true , $1); }
