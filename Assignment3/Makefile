@@ -7,7 +7,8 @@ tests:
 	@read -p "Enter testcase filename present in 'testcases' directory: " TESTFILE ;\
 	echo ;\
 	test -f testcases/$$TESTFILE || echo "Testcase file not found" ; \
-	test -f outputs/output.c ||  touch outputs/output.c ; \
+	test -f outputs/output.c && rm -rf outputs/output.c ;\
+	touch outputs/output.c ; \
 	test -f testcases/$$TESTFILE && echo "./compiler testcases/$$TESTFILE outputs/output.c" ; \
 	test -f testcases/$$TESTFILE && ./compiler testcases/$$TESTFILE outputs/output.c \
 	echo ; \
