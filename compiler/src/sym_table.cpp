@@ -42,7 +42,6 @@ void insert_symbol(char* name , symbol_type type , define_check check , char con
         newSymbol.val = val ;
 
         symbol_table.insert({name , newSymbol}) ;
-        sym = symbol_lookup(name);
     }
   
     return ;
